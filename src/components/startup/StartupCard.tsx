@@ -22,20 +22,21 @@ const StartupCard: React.FC<StartupCardProps> = ({ startup }) => {
   // Format founding date
   const formattedDate = foundingDate ? new Date(foundingDate).getFullYear() : 'N/A';
   
-  // Placeholder logo if none is provided
-  const logoSrc = logo || '/assets/images/placeholder-logo.svg';
+  // Get logo URL from the logo object structure that matches your backend
+  // According to your controller, logo is stored as an object with a url property
+  const logoUrl = logo && logo.url ? logo.url : '/assets/images/placeholder-logo.svg';
 
   return (
-    <Link 
+    <Link
       to={`/startup-profile/${_id}`}
       className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full"
     >
       <div className="p-6 flex flex-col h-full">
         <div className="flex items-center mb-4">
           <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 mr-3">
-            <img 
-              src={logoSrc} 
-              alt={name} 
+            <img
+              src={logoUrl}
+              alt={`${name} logo`}
               className="w-full h-full object-contain"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = '/assets/images/placeholder-logo.svg';
@@ -51,7 +52,7 @@ const StartupCard: React.FC<StartupCardProps> = ({ startup }) => {
             </div>
           </div>
         </div>
-
+        
         <p className="text-gray-600 mb-4 flex-grow">{tagline}</p>
         
         <div className="mt-auto">
@@ -67,10 +68,10 @@ const StartupCard: React.FC<StartupCardProps> = ({ startup }) => {
           <div className="border-t border-gray-100 pt-3 mt-2">
             <div className="flex justify-between text-sm">
               <div className="text-gray-500">
-                <span className="font-medium text-gray-900">{metrics.employees || '0'}</span> employees
+                <span className="font-medium text-gray-900">{metrics?.employees || '0'}</span> employees
               </div>
               <div className="text-gray-500">
-                {metrics.fundingTotal ? (
+                {metrics?.fundingTotal ? (
                   <span className="font-medium text-gray-900">${(metrics.fundingTotal / 1000).toFixed(0)}K</span>
                 ) : (
                   <span>No funding data</span>

@@ -41,6 +41,7 @@ import StartupProfile from './pages/Startup/StartupProfile';
 import WaitlistPage from './pages/WaitlistPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import ResendVerificationPage from './pages/Auth/ResendVerificationPage';
+import VerifyResultPage from './pages/Auth/VerifyResultPage';
 
 const App: React.FC = () => {
   return (
@@ -57,6 +58,7 @@ const App: React.FC = () => {
             <Route path="/verify/:token" element={<VerifyEmailPage />} />
             <Route path="/verification-sent" element={<VerificationSentPage />} />
             <Route path="/resend-verification" element={<ResendVerificationPage />} />
+            <Route path="/verify-result" element={<VerifyResultPage/>}/>
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path='/waitlist' element={<WaitlistPage />} />
             <Route path="/coming-soon" element={<ComingSoonPage />} />

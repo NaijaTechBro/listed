@@ -10,13 +10,30 @@ export interface User {
     // Other relevant user fields
   }
 
+  export interface AuthResponse {
+    success: boolean;
+    message: string;
+  }
+  
+  export interface LoginResponse extends AuthResponse {
+    token: string;
+    user: User;
+  }
+  
+  export interface ResetPasswordResponse extends LoginResponse {}
+  
+  export interface VerificationResponse extends AuthResponse {}
 
-  // client/src/types.ts
 
+  export interface StartupLogo {
+    url: string;
+    public_id?: string;
+  }
+  
 export interface Startup {
     _id: string;
     name: string;
-    logo: string;
+    logo?: StartupLogo;
     tagline: string;
     description: string;
     website: string;
@@ -128,6 +145,7 @@ export interface Startup {
     searchTerm?: string;
     featured?: boolean;
     limit?: number;
+    sort?: 'createdAt' | 'updatedAt' | 'name' | 'fundingTotal' | 'employees';
     createdBy?: string; // Add this field to support filtering by creator
     fundingRange?: {
       min?: number;

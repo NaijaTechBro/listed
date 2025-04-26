@@ -61,6 +61,7 @@ export const StartupProvider: React.FC<StartupProviderProps> = ({ children }) =>
     }
   }, [isAuthenticated]);
 
+  
   const buildQueryString = (filter?: StartupFilter, page?: number, limit?: number): string => {
     const params = new URLSearchParams();
     
@@ -69,9 +70,10 @@ export const StartupProvider: React.FC<StartupProviderProps> = ({ children }) =>
       if (filter.country) params.append('country', filter.country);
       if (filter.stage) params.append('stage', filter.stage);
       
-      // This is the key change - update how searchTerm is handled
-      if (filter.searchTerm) params.append('name[regex]', filter.searchTerm); // Match URL param name
+      // This is correct - using 'search' parameter
+      if (filter.searchTerm) params.append('search', filter.searchTerm);
       
+      // Use the correct format for range queries
       if (filter.fundingRange) {
         if (filter.fundingRange.min !== undefined) 
           params.append('metrics.fundingTotal[gte]', filter.fundingRange.min.toString());
@@ -92,6 +94,7 @@ export const StartupProvider: React.FC<StartupProviderProps> = ({ children }) =>
     
     return params.toString();
   };
+
 
   // Get all startups with optional filtering
   const getStartups = useCallback(async (filter?: StartupFilter, page?: number, limit?: number) => {
