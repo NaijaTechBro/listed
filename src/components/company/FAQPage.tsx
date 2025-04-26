@@ -11,23 +11,23 @@ interface FAQItem {
 const FAQPage: React.FC = () => {
   const [faqs, setFaqs] = useState<FAQItem[]>([
     {
-      question: 'How do I create an account?',
-      answer: 'At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident. At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.',
+      question: 'What is GetListed?',
+      answer: 'To empower African startups by providing them with the visibility, connections, and resources they need to build world-changing companies.',
       isOpen: false
     },
     {
       question: 'How do I create an account?',
-      answer: 'At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.',
+      answer: 'Creating an account is easy! Just click on the "Sign Up" button on the top right corner of the page, choose your account type and fill in your details. You will receive a confirmation email to verify your account.',
       isOpen: true
     },
     {
-      question: 'How do I create an account?',
-      answer: 'At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.',
+      question: 'How do you connect with Investors?',
+      answer: 'We connect startups with investors through our platform by providing a curated list of investment opportunities, networking events, and personalized introductions based on your startup’s needs and goals.',
       isOpen: false
     },
     {
-      question: 'What payment methods do you accept?',
-      answer: 'We accept all major credit cards including Visa, Mastercard, American Express, as well as PayPal, bank transfers, and mobile payment solutions.',
+      question: 'What offer do you have for startups?',
+      answer: 'We offer a range of services including access to a network of investors, mentorship programs, resources for business development, pitch deck building, startup valuation and opportunities to showcase your startup at events.',
       isOpen: false
     },
     {
@@ -56,9 +56,7 @@ const FAQPage: React.FC = () => {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl font-bold text-white mb-6">Frequently Asked Questions</h1>
           <p className="text-white text-lg">
-            Ut enim ad minim veniam, quis nostrud exercitational Lorem ipsum dolor sit amet, consectetur
-            adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
-            minim veniam, quis nostrud exerc
+           We have gathered some well curated answers to your budding questions to help you get started.
           </p>
         </div>
       </div>

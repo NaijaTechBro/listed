@@ -133,8 +133,8 @@ const PrivacyPage: React.FC = () => {
             GetListed Technologies, Inc.<br />
             123 Innovation Street<br />
             Lagos, Nigeria<br />
-            legal@getlisted.com<br />
-            +1 (555) 123-4567
+            legal@getlisted.site<br />
+            +234 (703) 8703 199
           </p>
         </div>
       </div>

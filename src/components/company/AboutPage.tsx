@@ -13,7 +13,7 @@ const AboutPage: React.FC = () => {
     {
       name: 'Sodiq Baki Adeiza',
       role: 'CEO & Co-founder',
-      imageUrl: '/api/placeholder/200/200'
+      imageUrl: 'https://res.cloudinary.com/dkcazf954/image/upload/v1701160793/blogposts/file_k7e4lb.jpg'
     },
     // {
     //   name: 'Michael Chen',
@@ -53,13 +53,13 @@ const AboutPage: React.FC = () => {
             <div>
               <h2 className="text-3xl font-bold mb-6">Our Story</h2>
               <p className="text-gray-700 mb-4">
-                Founded in 2021, GetListed began with a simple observation: despite incredible innovation happening across Africa, startups were struggling to get visibility and connect with the right investors and partners.
+                Founded in 2025, GetListed began with a simple observation: despite incredible innovation happening across Africa, startups were struggling to get visibility and connect with the right investors and partners.
               </p>
               <p className="text-gray-700 mb-4">
                 Our founders, having experienced these challenges firsthand, set out to build a platform that would level the playing field and create a thriving ecosystem where great ideas could find the support they need to grow.
               </p>
               <p className="text-gray-700">
-                Today, GetListed has helped over 500 startups across the continent raise funding, build partnerships, and scale their operations. But this is just the beginning of our journey.
+                Today, GetListed is on a mission to help over 500 startups across the continent raise funding, build partnerships, and scale their operations. But this is just the beginning ofss our journey.
               </p>
             </div>
             <div className="rounded-lg overflow-hidden">

@@ -22,18 +22,18 @@ const TermsPage: React.FC = () => {
         <div className="max-w-4xl mx-auto prose prose-lg">
           <h2>1. Introduction</h2>
           <p>
-            Welcome to GetListed ("Company", "we", "our", "us")! These Terms of Service ("Terms", "Terms of Service") govern your use of our website located at getlisted.com (together or individually "Service") operated by GetListed Technologies, Inc.
+            Welcome to GetListed ("Company", "we", "our", "us")! These Terms of Service ("Terms", "Terms of Service") govern your use of our website located at getlisted.site (together or individually "Service") operated by GetListed Technologies, Inc.
           </p>
           <p>
             Our Privacy Policy also governs your use of our Service and explains how we collect, safeguard and disclose information that results from your use of our web pages. Your agreement with us includes these Terms and our Privacy Policy ("Agreements"). You acknowledge that you have read and understood Agreements, and agree to be bound by them.
           </p>
           <p>
-            If you do not agree with (or cannot comply with) Agreements, then you may not use the Service, but please let us know by emailing at support@getlisted.com so we can try to find a solution. These Terms apply to all visitors, users and others who wish to access or use Service.
+            If you do not agree with (or cannot comply with) Agreements, then you may not use the Service, but please let us know by emailing at support@getlisted.site so we can try to find a solution. These Terms apply to all visitors, users and others who wish to access or use Service.
           </p>
           
           <h2>2. Communications</h2>
           <p>
-            By using our Service, you agree to subscribe to newsletters, marketing or promotional materials and other information we may send. However, you may opt out of receiving any, or all, of these communications from us by following the unsubscribe link or by emailing at support@getlisted.com.
+            By using our Service, you agree to subscribe to newsletters, marketing or promotional materials and other information we may send. However, you may opt out of receiving any, or all, of these communications from us by following the unsubscribe link or by emailing at support@getlisted.site.
           </p>
           
           <h2>3. Purchases</h2>
@@ -92,7 +92,7 @@ const TermsPage: React.FC = () => {
           
           <h2>8. Contact Us</h2>
           <p>
-            If you have any questions about these Terms, please contact us at legal@getlisted.com.
+            If you have any questions about these Terms, please contact us at legal@getlisted.site.
           </p>
         </div>
       </div>
