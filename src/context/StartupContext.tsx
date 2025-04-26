@@ -70,8 +70,11 @@ export const StartupProvider: React.FC<StartupProviderProps> = ({ children }) =>
       if (filter.country) params.append('country', filter.country);
       if (filter.stage) params.append('stage', filter.stage);
       
-      // This is correct - using 'search' parameter
+      // Using 'search' parameter for the backend
       if (filter.searchTerm) params.append('search', filter.searchTerm);
+      
+      // Handle sort parameter
+      if (filter.sort) params.append('sort', filter.sort);
       
       // Use the correct format for range queries
       if (filter.fundingRange) {
@@ -94,7 +97,6 @@ export const StartupProvider: React.FC<StartupProviderProps> = ({ children }) =>
     
     return params.toString();
   };
-
 
   // Get all startups with optional filtering
   const getStartups = useCallback(async (filter?: StartupFilter, page?: number, limit?: number) => {

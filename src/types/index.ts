@@ -25,15 +25,11 @@ export interface User {
   export interface VerificationResponse extends AuthResponse {}
 
 
-  export interface StartupLogo {
-    url: string;
-    public_id?: string;
-  }
   
 export interface Startup {
     _id: string;
     name: string;
-    logo?: StartupLogo;
+    logo: string;
     tagline: string;
     description: string;
     website: string;
@@ -145,8 +141,8 @@ export interface Startup {
     searchTerm?: string;
     featured?: boolean;
     limit?: number;
-    sort?: 'createdAt' | 'updatedAt' | 'name' | 'fundingTotal' | 'employees';
-    createdBy?: string; // Add this field to support filtering by creator
+    createdBy?: string;
+    sort?: string;
     fundingRange?: {
       min?: number;
       max?: number;

@@ -523,9 +523,14 @@ const StartupDirectory: React.FC = () => {
   const [sortOption, setSortOption] = useState<string>('newest');
   const ITEMS_PER_PAGE = 12;
 
+
   useEffect(() => {
     // Parse query parameters
     const searchParams = new URLSearchParams(location.search);
+    
+    // Extract sort with default value to ensure it's never undefined
+    const sortValue = searchParams.get('sort') || 'newest';
+    
     const newFilters: StartupFilter = {
       category: searchParams.get('category') || '',
       country: searchParams.get('country') || '',
@@ -539,24 +544,27 @@ const StartupDirectory: React.FC = () => {
       employeeCount: {
         min: searchParams.get('minEmployees') ? Number(searchParams.get('minEmployees')) : undefined,
         max: searchParams.get('maxEmployees') ? Number(searchParams.get('maxEmployees')) : undefined
-      }
+      },
+      // Add sort to the filter object, using the guaranteed non-undefined value
+      sort: sortValue
     };
     
     const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
-    const sort = searchParams.get('sort') || 'newest';
     
     setFilters(newFilters);
     setCurrentPage(page);
-    setSortOption(sort);
+    setSortOption(sortValue); // Using the guaranteed non-undefined value
     
-    // Pass filters with the search term to fetch startups
-    fetchStartups(newFilters, page, sort);
+    // Pass filters with all parameters to fetch startups
+    fetchStartups(newFilters, page, sortValue);
   }, [location.search]);
+
+  
 
   const fetchStartups = async (filterParams: StartupFilter = filters, page: number = currentPage, sort: string = sortOption) => {
     try {
-      // Add sorting to the filter params
-      const filtersWithSort = {
+      // Create a new filter object that includes the sort option
+      const filtersWithSort: StartupFilter = {
         ...filterParams,
         sort: sort
       };

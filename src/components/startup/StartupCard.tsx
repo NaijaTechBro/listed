@@ -22,9 +22,24 @@ const StartupCard: React.FC<StartupCardProps> = ({ startup }) => {
   // Format founding date
   const formattedDate = foundingDate ? new Date(foundingDate).getFullYear() : 'N/A';
   
-  // Get logo URL from the logo object structure that matches your backend
-  // According to your controller, logo is stored as an object with a url property
-  const logoUrl = logo && logo.url ? logo.url : '/assets/images/placeholder-logo.svg';
+  // Handle logo URL with proper type checking
+  const getLogoUrl = (logo: any): string => {
+    if (!logo) return '/assets/images/placeholder-logo.svg';
+    
+    // If logo is an object with url property
+    if (typeof logo === 'object' && logo !== null && 'url' in logo) {
+      return logo.url as string;
+    }
+    
+    // If logo is a string (direct URL)
+    if (typeof logo === 'string') {
+      return logo;
+    }
+    
+    return '/assets/images/placeholder-logo.svg';
+  };
+
+  const logoUrl = getLogoUrl(logo);
 
   return (
     <Link
