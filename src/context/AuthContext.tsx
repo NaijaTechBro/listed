@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import api from '../services/api'; 
-import { User } from '../types'; // Assuming you have a User type defined in types/user.ts
+import { User, VerificationResponse } from '../types';// Assuming you have a User type defined in types/user.ts
 
 
 // Define auth state interface
@@ -19,7 +19,7 @@ interface AuthContextType extends AuthState {
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
-  resendVerification: (email: string) => Promise<void>;
+  resendVerification: (email: string) => Promise<VerificationResponse>; 
   updateProfile: (userData: Partial<User>) => Promise<void>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   clearError: () => void;
@@ -231,18 +231,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // ...
+  
   // Resend verification email
-  const resendVerification = async (email: string) => {
+  const resendVerification = async (email: string): Promise<VerificationResponse> => {
     try {
       setAuthState(prev => ({ ...prev, loading: true }));
       
-      await api.post('/auth/resend-verification', { email });
+      const response = await api.post<VerificationResponse>('/auth/resend-verification', { email });
       
       setAuthState(prev => ({
         ...prev,
         loading: false,
         error: null
       }));
+      
+      return response.data;
     } catch (err: any) {
       setAuthState(prev => ({
         ...prev,
@@ -252,6 +256,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw err;
     }
   };
+
 
   // Update profile
   const updateProfile = async (userData: Partial<User>) => {

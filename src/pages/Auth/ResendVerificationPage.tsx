@@ -1,63 +1,120 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const ResendVerificationPage: React.FC = () => {
-  const location = useLocation();
   const [email, setEmail] = useState('');
-  const [formError, setFormError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
+  const { resendVerification, error, clearError } = useAuth();
   
-  const { resendVerification, isAuthenticated, loading, error, clearError } = useAuth();
-  const navigate = useNavigate();
-
-  // Initialize email from location state if available
-  useEffect(() => {
-    if (location.state && location.state.email) {
-      setEmail(location.state.email);
-    }
-  }, [location.state]);
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    }
-    
-    // Clear auth errors when component unmounts
-    return () => {
-      if (error) clearError();
-    };
-  }, [isAuthenticated, navigate, error, clearError]);
-
-  // Set form error if auth error exists
-  useEffect(() => {
-    if (error) {
-      setFormError(error);
-      setSuccessMessage('');
-    }
-  }, [error]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError('');
-    setSuccessMessage('');
-    
-    if (!email.trim()) {
-      setFormError('Please enter your email address');
-      return;
-    }
+    clearError();
+    setStatus('loading');
     
     try {
-      await resendVerification(email);
-      setSuccessMessage('Verification email has been sent. Please check your inbox.');
-      // Clear the form
-      setEmail('');
+      const response = await resendVerification(email);
+      setStatus('success');
+      setMessage(response.message || 'Verification email has been sent to your inbox.');
     } catch (err) {
-      // Error is handled in AuthContext and set to the error state
+      setStatus('error');
+      if (err instanceof Error) {
+        setMessage(err.message);
+      } else {
+        setMessage('Failed to send verification email. Please try again later.');
+      }
     }
   };
-
+  
+  const renderContent = () => {
+    switch (status) {
+      case 'success':
+        return (
+          <>
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold mb-4">Verification Email Sent!</h2>
+            <p className="mb-6">{message}</p>
+            <Link 
+              to="/login" 
+              className="inline-block bg-black text-white py-2 px-6 rounded-md hover:bg-gray-700"
+            >
+              Back to Login
+            </Link>
+          </>
+        );
+        
+      case 'error':
+        return (
+          <>
+            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold mb-4">Verification Failed</h2>
+            <p className="mb-6">{message || error}</p>
+            <button 
+              onClick={() => setStatus('idle')}
+              className="inline-block bg-black text-white py-2 px-6 rounded-md hover:bg-gray-700"
+            >
+              Try Again
+            </button>
+          </>
+        );
+      
+      case 'loading':
+        return (
+          <>
+            <div className="mx-auto w-16 h-16 flex items-center justify-center mb-4">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black"></div>
+            </div>
+            <h2 className="text-2xl font-bold mb-4">Sending Verification Email</h2>
+            <p className="mb-6">Please wait...</p>
+          </>
+        );
+        
+      case 'idle':
+      default:
+        return (
+          <>
+            <h2 className="text-2xl font-bold mb-4">Resend Verification Email</h2>
+            <p className="mb-6">Enter your email address to receive a new verification link.</p>
+            <form onSubmit={handleSubmit} className="mb-6">
+              <div className="mb-4">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Your email address"
+                  required
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                />
+              </div>
+              <button 
+                type="submit" 
+                className="w-full bg-black text-white py-2 px-6 rounded-md hover:bg-gray-700"
+              >
+                Send Verification Link
+              </button>
+            </form>
+            <div className="flex justify-center">
+              <Link 
+                to="/login" 
+                className="text-black hover:underline"
+              >
+                Back to Login
+              </Link>
+            </div>
+          </>
+        );
+    }
+  };
+  
   return (
     <div className="max-w-md mx-auto my-16 px-4">
       <div className="flex items-center justify-center mb-6">
@@ -68,54 +125,8 @@ const ResendVerificationPage: React.FC = () => {
         </svg>
         <Link to="/"><span className="ml-2 font-bold text-xl">GetListed</span></Link>
       </div>
-      <div className="bg-white p-8 shadow-md rounded-lg">
-        <h2 className="text-3xl font-bold text-center mb-8">Resend Verification Email</h2>
-        
-        {formError && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
-            {formError}
-          </div>
-        )}
-        
-        {successMessage && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md text-sm">
-            {successMessage}
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit}>
-          <div className="mb-6">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-              required
-              placeholder="Enter your email address"
-            />
-          </div>
-          
-          <button
-            type="submit"
-            className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
-            disabled={loading}
-          >
-            {loading ? 'Sending...' : 'Resend Verification Email'}
-          </button>
-        </form>
-        
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Remember your password?{' '}
-            <Link to="/login" className="text-black hover:text-gray-800">
-              Back to login
-            </Link>
-          </p>
-        </div>
+      <div className="bg-white p-8 shadow-md rounded-lg text-center">
+        {renderContent()}
       </div>
     </div>
   );
