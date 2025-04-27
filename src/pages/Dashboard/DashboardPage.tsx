@@ -76,6 +76,29 @@ const DashboardPage: React.FC = () => {
     return colors[index % colors.length];
   };
 
+  // New getLogoUrl function to handle different logo types
+  const getLogoUrl = (logo: any): string => {
+    // Default placeholder image
+    const placeholderUrl = '/assets/images/placeholder-logo.svg';
+    
+    // If logo is undefined or null, return placeholder
+    if (!logo) return placeholderUrl;
+    
+    // If logo is an object, try to access its url property
+    if (typeof logo === 'object' && logo !== null) {
+      // Safely access potential url property without assuming its existence
+      return (logo as any).url || placeholderUrl;
+    }
+    
+    // If logo is a string (direct URL), return it
+    if (typeof logo === 'string') {
+      return logo;
+    }
+    
+    // Fallback to placeholder for any other unexpected types
+    return placeholderUrl;
+  };
+
   return (
     <div className="p-6 bg-gray-50">
       {/* Welcome Header */}
@@ -193,66 +216,78 @@ const DashboardPage: React.FC = () => {
             </Link>
           </div>
         ) : (
+          // Responsive table container with horizontal scrolling on mobile
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Startup</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Views</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {/* Map over all userStartups without limit */}
-                {userStartups.map((startup, index) => (
-                  <tr key={startup._id}>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <div className={`h-10 w-10 flex-shrink-0 rounded-full ${getAvatarBgColor(index)} flex items-center justify-center text-white font-medium mr-3`}>
-                          {startup.logo ? (
-                            <img src={startup.logo} alt={startup.name} className="h-10 w-10 rounded-full object-cover" />
-                          ) : (
-                            getInitialLetter(startup.name)
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium">{startup.name}</div>
-                          <div className="flex items-center text-xs text-gray-400 mt-1">
-                            <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            {startup.city || ''}{startup.city && startup.country ? ', ' : ''}{startup.country || 'Location not specified'}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Startup</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Category</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Views</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {userStartups.map((startup, index) => (
+                    <tr key={startup._id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className={`h-10 w-10 flex-shrink-0 rounded-full ${getAvatarBgColor(index)} flex items-center justify-center text-white font-medium mr-3`}>
+                            {startup.logo ? (
+                              <img 
+                                src={getLogoUrl(startup.logo)} 
+                                alt={startup.name} 
+                                className="h-10 w-10 rounded-full object-cover"
+                                onError={(e) => {
+                                  console.error(`Failed to load logo for ${startup.name}`);
+                                  (e.target as HTMLImageElement).src = '/assets/images/placeholder-logo.svg';
+                                }}
+                              />
+                            ) : (
+                              getInitialLetter(startup.name)
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-medium">{startup.name}</div>
+                            <div className="flex items-center text-xs text-gray-400 mt-1">
+                              <svg className="h-3 w-3 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              <span className="truncate max-w-[120px]">
+                                {startup.city || ''}{startup.city && startup.country ? ', ' : ''}{startup.country || 'Location not specified'}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">{startup.category || 'N/A'}</td>
-                    <td className="px-6 py-4">
-                      <StatusBadge verified={startup.isVerified || false} />
-                    </td>
-                    <td className="px-6 py-4">{startup.metrics?.views || 0}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex space-x-2">
-                        <Link to={`/startup-profile/${startup._id}`} className="p-1 text-blue-600 hover:text-blue-800">
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        </Link>
-                        <Link to={`/dashboard/edit-startup/${startup._id}`} className="p-1 text-green-600 hover:text-green-800">
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">{startup.category || 'N/A'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <StatusBadge verified={startup.isVerified || false} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">{startup.metrics?.views || 0}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex space-x-2">
+                          <Link to={`/startup-profile/${startup._id}`} className="p-1 text-blue-600 hover:text-blue-800">
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </Link>
+                          <Link to={`/dashboard/edit-startup/${startup._id}`} className="p-1 text-green-600 hover:text-green-800">
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

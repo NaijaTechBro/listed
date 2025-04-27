@@ -25,6 +25,17 @@ const StartupForm: React.FC = () => {
 
   // Form sections management
   const [activeSection, setActiveSection] = useState<'basic' | 'location' | 'metrics' | 'social' | 'founders' | 'funding'>('basic');
+  const sections = ['basic', 'location', 'metrics', 'social', 'founders', 'funding'];
+  
+  // Track section completion status
+  const [sectionStatus, setSectionStatus] = useState<Record<string, boolean>>({
+    basic: false,
+    location: false,
+    metrics: true, // Optional fields, so default to true
+    social: true,  // Optional fields, so default to true
+    founders: false,
+    funding: true  // Optional fields, so default to true
+  });
   
   // Revenue options matching the enum in Mongoose schema
   const revenueOptions = ['Pre-revenue', '$1K-$10K', '$10K-$100K', '$100K-$1M', '$1M-$10M', '$10M+', 'Undisclosed'];
@@ -74,6 +85,10 @@ const StartupForm: React.FC = () => {
   // Form submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  
+  // Global validation message
+  const [showGlobalValidation, setShowGlobalValidation] = useState(false);
+  const [incompleteTabsMessage, setIncompleteTabsMessage] = useState('');
 
   // Load existing startup data if editing
   useEffect(() => {
@@ -132,6 +147,11 @@ const StartupForm: React.FC = () => {
       if (startup.logo) {
         setLogoPreview(startup.logo);
       }
+      
+      // Check initial section completion
+      validateSection('basic');
+      validateSection('location');
+      validateSection('founders');
     }
   }, [startup, isEditing]);
 
@@ -214,10 +234,11 @@ const StartupForm: React.FC = () => {
     // Clear validation errors for this field
     const errorKey = `founders[${index}].${name}`;
     if (validationErrors[errorKey]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [errorKey]: ''
-      }));
+      setValidationErrors(prev => {
+        const updated = {...prev};
+        delete updated[errorKey];
+        return updated;
+      });
     }
   };
 
@@ -260,10 +281,11 @@ const StartupForm: React.FC = () => {
     // Clear validation errors
     const errorKey = `fundingRounds[${index}].${name}`;
     if (validationErrors[errorKey]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [errorKey]: ''
-      }));
+      setValidationErrors(prev => {
+        const updated = {...prev};
+        delete updated[errorKey];
+        return updated;
+      });
     }
   };
 
@@ -312,66 +334,159 @@ const StartupForm: React.FC = () => {
     }));
   };
 
-  // Validate form
-  const validateForm = (): boolean => {
+  // Validate specific section
+  const validateSection = (section: string): boolean => {
     const errors: Record<string, string> = {};
+    let isValid = true;
     
-    // Basic validation
-    if (!formData.name) errors.name = 'Startup name is required';
-    if (!formData.tagline) errors.tagline = 'Tagline is required';
-    if (formData.tagline.length > 100) errors.tagline = 'Tagline must be less than 100 characters';
-    if (!formData.description) errors.description = 'Description is required';
-    
-    // URL validations (only if value exists and isn't a file)
-    if (formData.logo && !logoFile && !/^https?:\/\/.+/.test(formData.logo)) {
-      errors.logo = 'Please enter a valid URL or upload an image';
+    switch(section) {
+      case 'basic':
+        if (!formData.name) {
+          errors.name = 'Startup name is required';
+          isValid = false;
+        }
+        if (!formData.tagline) {
+          errors.tagline = 'Tagline is required';
+          isValid = false;
+        }
+        if (formData.tagline.length > 100) {
+          errors.tagline = 'Tagline must be less than 100 characters';
+          isValid = false;
+        }
+        if (!formData.description) {
+          errors.description = 'Description is required';
+          isValid = false;
+        }
+        if (formData.logo && !logoFile && !/^https?:\/\/.+/.test(formData.logo)) {
+          errors.logo = 'Please enter a valid URL or upload an image';
+          isValid = false;
+        }
+        if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
+          errors.website = 'Please enter a valid URL';
+          isValid = false;
+        }
+        if (!formData.category) {
+          errors.category = 'Category is required';
+          isValid = false;
+        }
+        if (!formData.stage) {
+          errors.stage = 'Stage is required';
+          isValid = false;
+        }
+        break;
+        
+      case 'location':
+        if (!formData.country) {
+          errors.country = 'Country is required';
+          isValid = false;
+        }
+        break;
+        
+      case 'social':
+        Object.entries(formData.socialProfiles).forEach(([key, value]) => {
+          if (value && !/^https?:\/\/.+/.test(value)) {
+            errors[`socialProfiles.${key}`] = 'Please enter a valid URL';
+            isValid = false;
+          }
+        });
+        break;
+        
+      case 'founders':
+        let hasValidFounder = false;
+        formData.founders.forEach((founder, index) => {
+          if (founder.name) {
+            hasValidFounder = true;
+          }
+          if (founder.linkedin && !/^https?:\/\/.+/.test(founder.linkedin)) {
+            errors[`founders[${index}].linkedin`] = 'Please enter a valid LinkedIn URL';
+            isValid = false;
+          }
+        });
+        if (!hasValidFounder) {
+          errors['founders[0].name'] = 'At least one founder name is required';
+          isValid = false;
+        }
+        break;
+        
+      case 'funding':
+        formData.fundingRounds?.forEach((round, index) => {
+          if (round.stage) {
+            if (round.amount && round.amount < 0) {
+              errors[`fundingRounds[${index}].amount`] = 'Amount cannot be negative';
+              isValid = false;
+            }
+            if (round.valuation && round.valuation < 0) {
+              errors[`fundingRounds[${index}].valuation`] = 'Valuation cannot be negative';
+              isValid = false;
+            }
+          }
+        });
+        break;
     }
-    if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
-      errors.website = 'Please enter a valid URL';
-    }
     
-    // Category and location validations
-    if (!formData.category) errors.category = 'Category is required';
-    if (!formData.country) errors.country = 'Country is required';
+    // Update validation errors
+    setValidationErrors(prev => ({
+      ...prev,
+      ...errors
+    }));
     
-    // Stage validation
-    if (!formData.stage) errors.stage = 'Stage is required';
+    // Update section status
+    setSectionStatus(prev => ({
+      ...prev,
+      [section]: isValid
+    }));
     
-    // Social profiles URL validations
-    Object.entries(formData.socialProfiles).forEach(([key, value]) => {
-      if (value && !/^https?:\/\/.+/.test(value)) {
-        errors[`socialProfiles.${key}`] = 'Please enter a valid URL';
-      }
-    });
-    
-    // Founders validation
-    formData.founders.forEach((founder, index) => {
-      if (!founder.name) {
-        errors[`founders[${index}].name`] = 'Founder name is required';
-      }
-      if (founder.linkedin && !/^https?:\/\/.+/.test(founder.linkedin)) {
-        errors[`founders[${index}].linkedin`] = 'Please enter a valid LinkedIn URL';
-      }
-    });
-    
-    // Funding rounds validation
-    formData.fundingRounds?.forEach((round, index) => {
-      if (round.amount && round.amount < 0) {
-        errors[`fundingRounds[${index}].amount`] = 'Amount cannot be negative';
-      }
-      if (round.valuation && round.valuation < 0) {
-        errors[`fundingRounds[${index}].valuation`] = 'Valuation cannot be negative';
-      }
-      if (!round.stage) {
-        errors[`fundingRounds[${index}].stage`] = 'Funding stage is required';
-      }
-    });
-    
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+    return isValid;
   };
 
-  // Form submission handler - updated to use FormData
+  // Validate all sections
+  const validateForm = (): boolean => {
+    // Reset all section statuses to re-validate everything
+    setShowGlobalValidation(true);
+    
+    const basicValid = validateSection('basic');
+    const locationValid = validateSection('location');
+    const metricsValid = validateSection('metrics');
+    const socialValid = validateSection('social');
+    const foundersValid = validateSection('founders');
+    const fundingValid = validateSection('funding');
+    
+    // Create message about incomplete tabs
+    const incompleteTabs = [];
+    if (!basicValid) incompleteTabs.push('Basic Information');
+    if (!locationValid) incompleteTabs.push('Location');
+    if (!metricsValid) incompleteTabs.push('Metrics');
+    if (!socialValid) incompleteTabs.push('Social Profiles');
+    if (!foundersValid) incompleteTabs.push('Founders');
+    if (!fundingValid) incompleteTabs.push('Funding');
+    
+    if (incompleteTabs.length > 0) {
+      setIncompleteTabsMessage(`Please complete the required fields in the following tabs: ${incompleteTabs.join(', ')}`);
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Next section handler
+  const goToNextSection = () => {
+    const currentSectionIndex = sections.indexOf(activeSection);
+    if (currentSectionIndex < sections.length - 1) {
+      if (validateSection(activeSection)) {
+        setActiveSection(sections[currentSectionIndex + 1] as typeof activeSection);
+      }
+    }
+  };
+
+  // Previous section handler
+  const goToPrevSection = () => {
+    const currentSectionIndex = sections.indexOf(activeSection);
+    if (currentSectionIndex > 0) {
+      setActiveSection(sections[currentSectionIndex - 1] as typeof activeSection);
+    }
+  };
+
+  // Form submission handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -392,9 +507,6 @@ const StartupForm: React.FC = () => {
         // If no new file but URL exists, pass it in formData
         startupFormData.append('logoUrl', formData.logo);
       }
-      
-      // Convert the complex JSON object to string and append to FormData
-      // We need to handle the nested structure separately
       
       // Append simple string fields
       startupFormData.append('name', formData.name);
@@ -475,22 +587,28 @@ const StartupForm: React.FC = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Section navigation */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {['basic', 'location', 'metrics', 'social', 'founders', 'funding'].map((section) => (
-          <button
-            key={section}
-            type="button"
-            onClick={() => navigateToSection(section as typeof activeSection)}
-            className={`px-4 py-2 rounded-md ${
-              activeSection === section 
-                ? 'bg-indigo-600 text-white' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            } transition-colors duration-200`}
-          >
-            {section.charAt(0).toUpperCase() + section.slice(1)}
-          </button>
-        ))}
+      {/* Progress indicator */}
+      <div className="mb-6">
+        {/* <h2 className="text-xl font-bold mb-4">Startup Form</h2> */}
+        <div className="flex flex-wrap gap-2">
+          {sections.map((section) => (
+            <button
+              key={section}
+              type="button"
+              onClick={() => navigateToSection(section as typeof activeSection)}
+              className={`px-4 py-2 rounded-md ${
+                activeSection === section 
+                  ? 'bg-black text-white' 
+                  : 'bg-gray-200 text-gray-700'
+              } ${
+                sectionStatus[section] ? 'border-l-4 border-green-500' : 'border-l-4 border-yellow-500'
+              }`}
+            >
+              {section.charAt(0).toUpperCase() + section.slice(1)}
+              {sectionStatus[section] ? ' ✓' : ' !'} 
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Display any API errors at the top */}
@@ -500,327 +618,390 @@ const StartupForm: React.FC = () => {
         </div>
       )}
       
+      {/* Global validation message */}
+      {showGlobalValidation && incompleteTabsMessage && (
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md mb-6">
+          <p className="text-yellow-700">{incompleteTabsMessage}</p>
+        </div>
+      )}
+      
       {/* Basic Information Section */}
       <div className={activeSection === 'basic' ? 'block' : 'hidden'}>
         <div className="border-b border-gray-200 pb-6">
-          <h3 className="text-xl font-semibold mb-4 text-indigo-600">Basic Information</h3>
+          <h3 className="text-xl font-semibold mb-4 text-black">Basic Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="transition-all duration-300 transform hover:scale-105">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Startup Name*
+          Startup Name*
               </label>
               <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className={`w-full px-4 py-3 border ${validationErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
-                placeholder="Enter startup name"
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+          className={`w-full px-4 py-3 border ${validationErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+          placeholder="Enter startup name"
               />
               {validationErrors.name && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.name}</p>
+          <p className="mt-1 text-sm text-red-600">{validationErrors.name}</p>
               )}
             </div>
             
-            <div className="transition-all duration-300 transform hover:scale-105">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Logo
+          Logo
               </label>
               <div className="flex items-start space-x-4">
-                <div className="flex-1">
-                  {/* Hidden file input */}
+          <div className="flex-1">
+            {/* Hidden file input */}
+            <input
+              type="file"
+              ref={logoInputRef}
+              onChange={handleLogoChange}
+              accept="image/*"
+              className="hidden"
+            />
+            
+            {/* Custom file upload button */}
+            <button
+              type="button"
+              onClick={triggerLogoUpload}
+              className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg border border-gray-300 w-full flex items-center justify-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+              </svg>
+              Upload Logo
+            </button>
+            
+            {/* Text input for URL (Alternative) */}
+            <div className="mt-2">
+              <input
+                type="url"
+                name="logo"
+                value={formData.logo}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 border ${validationErrors.logo ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                placeholder="Or enter logo URL: https://..."
+              />
+            </div>
+          </div>
+          
+          {/* Logo preview */}
+          {logoPreview && (
+            <div className="w-16 h-16 overflow-hidden rounded-md border border-gray-300">
+              <img 
+                src={logoPreview} 
+                alt="Logo preview" 
+                className="w-full h-full object-cover" 
+              />
+            </div>
+          )}
+              </div>
+              {validationErrors.logo && (
+          <p className="mt-1 text-sm text-red-600">{validationErrors.logo}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+          Tagline* <span className="text-xs text-gray-500">(max 100 chars)</span>
+              </label>
+              <input
+          type="text"
+          name="tagline"
+          value={formData.tagline}
+          onChange={handleChange}
+          required
+          maxLength={100}
+          className={`w-full px-4 py-3 border ${validationErrors.tagline ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+          placeholder="One-line description of your startup"
+              />
+              {validationErrors.tagline && (
+          <p className="mt-1 text-sm text-red-600">{validationErrors.tagline}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+          Website
+              </label>
+              <input
+          type="url"
+          name="website"
+          value={formData.website}
+          onChange={handleChange}
+          className={`w-full px-4 py-3 border ${validationErrors.website ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+          placeholder="https://..."
+              />
+              {validationErrors.website && (
+          <p className="mt-1 text-sm text-red-600">{validationErrors.website}</p>
+              )}
+            </div>
+            
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+          Description*
+              </label>
+              <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          required
+          rows={4}
+          className={`w-full px-4 py-3 border ${validationErrors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+          placeholder="Describe your startup in detail"
+              />
+              {validationErrors.description && (
+          <p className="mt-1 text-sm text-red-600">{validationErrors.description}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+          Category*
+              </label>
+              <select
+          name="category"
+          value={formData.category}
+          onChange={handleChange}
+          required
+          className={`w-full px-4 py-3 border ${validationErrors.category ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+              >
+          <option value="">Select Category</option>
+          {categories.map(category => (
+            <option key={category} value={category}>{category}</option>
+          ))}
+              </select>
+              {validationErrors.category && (
+          <p className="mt-1 text-sm text-red-600">{validationErrors.category}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+          Sub-Category
+              </label>
+              <input
+          type="text"
+          name="subCategory"
+          value={formData.subCategory}
+          onChange={handleChange}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+          placeholder="E.g., Marketing Automation, HR Tech"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+          Stage*
+              </label>
+              <select
+          name="stage"
+          value={formData.stage}
+          onChange={handleChange}
+          required
+          className={`w-full px-4 py-3 border ${validationErrors.stage ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200`}
+          >
+            <option value="">Select Stage</option>
+           {stages.map(stage => (
+              <option key={stage} value={stage}>{stage}</option>
+               ))}
+          </select>
+             {validationErrors.stage && (
+               <p className="mt-1 text-sm text-red-600">{validationErrors.stage}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+          Founding Date
+              </label>
+              <input
+          type="date"
+          name="foundingDate"
+          value={formData.foundingDate}
+          onChange={handleChange}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+          Products/Services
+              </label>
+              <textarea
+          name="products"
+          value={formData.products}
+          onChange={handleChange}
+          rows={3}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+          placeholder="List your products or services"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Next Button */}
+        <div className="flex justify-end mt-4">
+          <button
+            type="button"
+            onClick={goToNextSection}
+            className="bg-black text-white px-6 py-3 rounded-lg hover:bg-black transition-all duration-300"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+        
+            {/* Location Section */}
+          <div className={activeSection === 'location' ? 'block' : 'hidden'}>
+            <div className="border-b border-gray-200 pb-6">
+              <h3 className="text-xl font-semibold mb-4 text-black">Location</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Country*
+                  </label>
                   <input
-                    type="file"
-                    ref={logoInputRef}
-                    onChange={handleLogoChange}
-                    accept="image/*"
-                    className="hidden"
+                    type="text"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    required
+                    className={`w-full px-4 py-3 border ${validationErrors.country ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                    placeholder="Enter country"
                   />
-                  
-                  {/* Custom file upload button */}
-                  <button
-                    type="button"
-                    onClick={triggerLogoUpload}
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg border border-gray-300 transition-colors w-full flex items-center justify-center"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-                    </svg>
-                    Upload Logo
-                  </button>
-                  
-                  {/* Text input for URL (Alternative) */}
-                  <div className="mt-2">
+                  {validationErrors.country && (
+                    <p className="mt-1 text-sm text-red-600">{validationErrors.country}</p>
+                  )}
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      City
+                    </label>
                     <input
-                      type="url"
-                      name="logo"
-                      value={formData.logo}
+                      type="text"
+                      name="city"
+                      value={formData.city}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 border ${validationErrors.logo ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
-                      placeholder="Or enter logo URL: https://..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                      placeholder="Enter city"
                     />
                   </div>
                 </div>
-                
-                {/* Logo preview */}
-                {logoPreview && (
-                  <div className="w-16 h-16 overflow-hidden rounded-md border border-gray-300">
-                    <img 
-                      src={logoPreview} 
-                      alt="Logo preview" 
-                      className="w-full h-full object-cover" 
-                    />
-                  </div>
-                )}
               </div>
-              {validationErrors.logo && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.logo}</p>
-              )}
-            </div>
 
-            <div className="transition-all duration-300 transform hover:scale-105">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tagline* <span className="text-xs text-gray-500">(max 100 chars)</span>
-              </label>
-              <input
-                type="text"
-                name="tagline"
-                value={formData.tagline}
-                onChange={handleChange}
-                required
-                maxLength={100}
-                className={`w-full px-4 py-3 border ${validationErrors.tagline ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
-                placeholder="One-line description of your startup"
-              />
-              {validationErrors.tagline && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.tagline}</p>
-              )}
-            </div>
-
-            <div className="transition-all duration-300 transform hover:scale-105">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Website
-              </label>
-              <input
-                type="url"
-                name="website"
-                value={formData.website}
-                onChange={handleChange}
-                className={`w-full px-4 py-3 border ${validationErrors.website ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
-                placeholder="https://..."
-              />
-              {validationErrors.website && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.website}</p>
-              )}
-            </div>
-
-            {/* Rest of the form sections remain the same */}
-            {/* ... */}
-            
-            <div className="transition-all duration-300 transform hover:scale-105 md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description*
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                required
-                rows={4}
-                className={`w-full px-4 py-3 border ${validationErrors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
-                placeholder="Describe your startup in detail"
-              />
-              {validationErrors.description && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.description}</p>
-              )}
-            </div>
-
-            <div className="transition-all duration-300 transform hover:scale-105">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category*
-              </label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                required
-                className={`w-full px-4 py-3 border ${validationErrors.category ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
-              >
-                <option value="">Select Category</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-              {validationErrors.category && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.category}</p>
-              )}
-            </div>
-
-            <div className="transition-all duration-300 transform hover:scale-105">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sub-Category
-              </label>
-              <input
-                type="text"
-                name="subCategory"
-                value={formData.subCategory}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
-                placeholder="E.g., Marketing Automation, HR Tech"
-              />
-            </div>
-
-            <div className="transition-all duration-300 transform hover:scale-105">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Stage*
-              </label>
-              <select
-                name="stage"
-                value={formData.stage}
-                onChange={handleChange}
-                required
-                className={`w-full px-4 py-3 border ${validationErrors.stage ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
-              >
-                <option value="">Select Stage</option>
-                {stages.map(stage => (
-                  <option key={stage} value={stage}>{stage}</option>
-                ))}
-              </select>
-              {validationErrors.stage && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.stage}</p>
-              )}
-            </div>
-
-            <div className="transition-all duration-300 transform hover:scale-105">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Founding Date
-              </label>
-              <input
-                type="date"
-                name="foundingDate"
-                value={formData.foundingDate}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
-              />
-            </div>
-
-            <div className="transition-all duration-300 transform hover:scale-105 md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Products/Services
-              </label>
-              <textarea
-                name="products"
-                value={formData.products}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
-                placeholder="Describe your products or services"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-             {/* Location Section */}
-       <div className={activeSection === 'location' ? 'block' : 'hidden'}>
-         <div className="border-b border-gray-200 pb-6">
-           <h3 className="text-xl font-semibold mb-4 text-indigo-600">Location</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div className="transition-all duration-300 transform hover:scale-105">
-               <label className="block text-sm font-medium text-gray-700 mb-2">
-                 Country*
-               </label>
-               <input
-                type="text"
-                name="country"
-                value={formData.country}
-                onChange={handleChange}
-                required
-                className={`w-full px-4 py-3 border ${validationErrors.country ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
-                placeholder="Country"
-              />
-              {validationErrors.country && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.country}</p>
-              )}
-            </div>
-
-            <div className="transition-all duration-300 transform hover:scale-105">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                City
-              </label>
-              <input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
-                placeholder="City"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Metrics Section */}
-      <div className={activeSection === 'metrics' ? 'block' : 'hidden'}>
-        <div className="border-b border-gray-200 pb-6">
-          <h3 className="text-xl font-semibold mb-4 text-indigo-600">Metrics</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="transition-all duration-300 transform hover:scale-105">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Total Funding (USD)
-              </label>
-              <input
-                type="number"
-                name="metrics.fundingTotal"
-                value={formData.metrics.fundingTotal}
-                onChange={handleChange}
-                min="0"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
-                placeholder="0"
-              />
-            </div>
-
-            <div className="transition-all duration-300 transform hover:scale-105">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Number of Employees
-              </label>
-              <input
-                type="number"
-                name="metrics.employees"
-                value={formData.metrics.employees}
-                onChange={handleChange}
-                min="0"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
-                placeholder="0"
-              />
-            </div>
-            <div className="transition-all duration-300 transform hover:scale-105">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Annual Revenue Range
-                </label>
-                <select
-                  name="metrics.revenue"
-                  value={formData.metrics.revenue}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                {/* Navigation Buttons */}
+                <div className="flex justify-between mt-4">
+                <button
+                  type="button"
+                  onClick={goToPrevSection}
+                  className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-all duration-300"
                 >
-                    {revenueOptions.map(range => (
-                    <option key={range} value={range}>{range}</option>
-                  ))}
-                </select>
-            </div>
-          </div>
-        </div>
-      </div>
+                  Previous
+                </button>
 
-      {/* Social Profiles Section */}
+                <button
+                  type="button"
+                  onClick={goToNextSection}
+                  className="bg-black text-white px-6 py-3 rounded-lg hover:bg-black transition-all duration-300"
+                >
+                  Next
+                </button>
+                </div>
+          </div>
+        
+        
+                    {/* Metrics Section */} 
+              <div className={activeSection === 'metrics' ? 'block' : 'hidden'}>
+                <div className="border-b border-gray-200 pb-6">
+                  <h3 className="text-xl font-semibold mb-4 text-black">Metrics</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Total Funding
+                      </label>
+                      <input
+                        type="number"
+                        name="metrics.fundingTotal"
+                        value={formData.metrics.fundingTotal}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border ${validationErrors['metrics.fundingTotal'] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                        placeholder="Enter total funding raised"
+                      />
+                      {validationErrors['metrics.fundingTotal'] && (
+                        <p className="mt-1 text-sm text-red-600">{validationErrors['metrics.fundingTotal']}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Number of Employees
+                      </label>
+                      <input
+                        type="number"
+                        name="metrics.employees"
+                        value={formData.metrics.employees}
+                        onChange={handleChange}
+                        min="0"
+                        className={`w-full px-4 py-3 border ${validationErrors['metrics.employees'] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                        placeholder="Enter number of employees"
+                      />
+                      {validationErrors['metrics.employees'] && (
+                        <p className="mt-1 text-sm text-red-600">{validationErrors['metrics.employees']}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Annual Revenue Range
+                      </label>
+                      <select
+                        name="metrics.revenue"
+                        value={formData.metrics.revenue}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border ${validationErrors['metrics.revenue'] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                      >
+                        {revenueOptions.map(range => (
+                          <option key={range} value={range}>{range}</option>
+                        ))}   
+                      </select>
+                      {validationErrors['metrics.revenue'] && (
+                        <p className="mt-1 text-sm text-red-600">{validationErrors['metrics.revenue']}</p>
+                      )}
+                      </div>
+                    </div>
+
+                  </div>
+                  {/* Navigation Buttons */}
+                <div className="flex justify-between mt-4">
+                <button
+                  type="button"
+                  onClick={goToPrevSection}
+                  className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-all duration-300"
+                >
+                  Previous
+                </button>
+
+                <button
+                  type="button"
+                  onClick={goToNextSection}
+                  className="bg-black text-white px-6 py-3 rounded-lg hover:bg-black transition-all duration-300"
+                >
+                  Next
+                </button>
+                </div>
+                  </div>
+              
+            {/* Social Profiles Section */}
       <div className={activeSection === 'social' ? 'block' : 'hidden'}>
         <div className="border-b border-gray-200 pb-6">
-          <h3 className="text-xl font-semibold mb-4 text-indigo-600">Social Profiles</h3>
+          <h3 className="text-xl font-semibold mb-4 text-black">Social Profiles</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="transition-all duration-300 transform hover:scale-105">
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 LinkedIn
               </label>
@@ -829,15 +1010,15 @@ const StartupForm: React.FC = () => {
                 name="socialProfiles.linkedin"
                 value={formData.socialProfiles.linkedin}
                 onChange={handleChange}
-                className={`w-full px-4 py-3 border ${validationErrors['socialProfiles.linkedin'] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
+                className={`w-full px-4 py-3 border ${validationErrors['socialProfiles.linkedin'] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
                 placeholder="https://linkedin.com/company/..."
               />
               {validationErrors['socialProfiles.linkedin'] && (
                 <p className="mt-1 text-sm text-red-600">{validationErrors['socialProfiles.linkedin']}</p>
               )}
-            </div>
+            </div>  
 
-            <div className="transition-all duration-300 transform hover:scale-105">
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Twitter
               </label>
@@ -846,7 +1027,7 @@ const StartupForm: React.FC = () => {
                 name="socialProfiles.twitter"
                 value={formData.socialProfiles.twitter}
                 onChange={handleChange}
-                className={`w-full px-4 py-3 border ${validationErrors['socialProfiles.twitter'] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
+                className={`w-full px-4 py-3 border ${validationErrors['socialProfiles.twitter'] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
                 placeholder="https://twitter.com/..."
               />
               {validationErrors['socialProfiles.twitter'] && (
@@ -854,7 +1035,7 @@ const StartupForm: React.FC = () => {
               )}
             </div>
 
-            <div className="transition-all duration-300 transform hover:scale-105">
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Facebook
               </label>
@@ -863,7 +1044,7 @@ const StartupForm: React.FC = () => {
                 name="socialProfiles.facebook"
                 value={formData.socialProfiles.facebook}
                 onChange={handleChange}
-                className={`w-full px-4 py-3 border ${validationErrors['socialProfiles.facebook'] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
+                className={`w-full px-4 py-3 border ${validationErrors['socialProfiles.facebook'] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
                 placeholder="https://facebook.com/..."
               />
               {validationErrors['socialProfiles.facebook'] && (
@@ -871,7 +1052,7 @@ const StartupForm: React.FC = () => {
               )}
             </div>
 
-            <div className="transition-all duration-300 transform hover:scale-105">
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Instagram
               </label>
@@ -880,146 +1061,187 @@ const StartupForm: React.FC = () => {
                 name="socialProfiles.instagram"
                 value={formData.socialProfiles.instagram}
                 onChange={handleChange}
-                className={`w-full px-4 py-3 border ${validationErrors['socialProfiles.instagram'] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
+                className={`w-full px-4 py-3 border ${validationErrors['socialProfiles.instagram'] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
                 placeholder="https://instagram.com/..."
               />
               {validationErrors['socialProfiles.instagram'] && (
                 <p className="mt-1 text-sm text-red-600">{validationErrors['socialProfiles.instagram']}</p>
               )}
             </div>
-          </div>
-        </div>
+            </div>
+            </div>
+            {/* Navigation Buttons */}
+            <div className="flex justify-between mt-4">
+                <button
+                  type="button"
+                  onClick={goToPrevSection}
+                  className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-all duration-300"
+                >
+                  Previous
+                </button>
+
+                <button
+                  type="button"
+                  onClick={goToNextSection}
+                  className="bg-black text-white px-6 py-3 rounded-lg hover:bg-black transition-all duration-300"
+                >
+                  Next
+                </button>
+                </div>
       </div>
 
-      {/* Founders Section */}
+        
+        {/* Founders Section */}  
       <div className={activeSection === 'founders' ? 'block' : 'hidden'}>
         <div className="border-b border-gray-200 pb-6">
-          <h3 className="text-xl font-semibold mb-4 text-indigo-600">Founders</h3>
-          
+          <h3 className="text-xl font-semibold mb-4 text-black">Founders</h3>
+
           {formData.founders.map((founder, index) => (
             <div key={index} className="mb-8 p-6 bg-gray-50 rounded-lg shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="text-lg font-medium text-gray-800">Founder {index + 1}</h4>
-                {formData.founders.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeFounder(index)}
-                    className="text-red-500 hover:text-red-700 transition-colors duration-200"
-                  >
-                    Remove
-                  </button>
+                         <div className="flex justify-between items-center mb-4">
+                           <h4 className="text-lg font-medium text-gray-800">Founder {index + 1}</h4>
+                           {formData.founders.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeFounder(index)}
+                                className="text-red-500 hover:text-red-700 transition-colors duration-200"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name*
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={founder.name}
+                  onChange={(e) => handleFounderChange(index, e)}
+                  required
+                  className={`w-full px-4 py-3 border ${validationErrors[`founders[${index}].name`] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                  placeholder="Enter founder's name"
+                />
+                {validationErrors[`founders[${index}].name`] && (
+                  <p className="mt-1 text-sm text-red-600">{validationErrors[`founders[${index}].name`]}</p>
                 )}
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="transition-all duration-300 transform hover:scale-105">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name*
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={founder.name}
-                    onChange={(e) => handleFounderChange(index, e)}
-                    required
-                    className={`w-full px-4 py-3 border ${validationErrors[`founders[${index}].name`] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
-                    placeholder="John Doe"
-                  />
-                  {validationErrors[`founders[${index}].name`] && (
-                    <p className="mt-1 text-sm text-red-600">{validationErrors[`founders[${index}].name`]}</p>
-                  )}
-                </div>
 
-                <div className="transition-all duration-300 transform hover:scale-105">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Role
-                  </label>
-                  <input
-                    type="text"
-                    name="role"
-                    value={founder.role}
-                    onChange={(e) => handleFounderChange(index, e)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
-                    placeholder="CEO, CTO, etc."
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Role
+                </label>
+                <input
+                  type="text"
+                  name="role"
+                  value={founder.role}
+                  onChange={(e) => handleFounderChange(index, e)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                  placeholder="CEO, CTO, etc."
+                />
+              </div>
 
-                <div className="transition-all duration-300 transform hover:scale-105">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    LinkedIn Profile
-                  </label>
-                  <input
-                    type="url"
-                    name="linkedin"
-                    value={founder.linkedin}
-                    onChange={(e) => handleFounderChange(index, e)}
-                    className={`w-full px-4 py-3 border ${validationErrors[`founders[${index}].linkedin`] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
-                    placeholder="https://linkedin.com/in/..."
-                  />
-                  {validationErrors[`founders[${index}].linkedin`] && (
-                    <p className="mt-1 text-sm text-red-600">{validationErrors[`founders[${index}].linkedin`]}</p>
-                  )}
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  LinkedIn
+                </label>
+                <input
+                  type="url"
+                  name="linkedin"
+                  value={founder.linkedin}
+                  onChange={(e) => handleFounderChange(index, e)}
+                  className={`w-full px-4 py-3 border ${validationErrors[`founders[${index}].linkedin`] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                  placeholder="https://linked.com/in/..."
+                />
+                {validationErrors[`founders[${index}].linkedin`] && (
+                  <p className="mt-1 text-sm text-red-600">{validationErrors[`founders[${index}].linkedin`]}</p>
+                )}
+              </div>
 
-                <div className="transition-all duration-300 transform hover:scale-105 md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bio
-                  </label>
-                  <textarea
-                    name="bio"
-                    value={founder.bio}
-                    onChange={(e) => handleFounderChange(index, e)}
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
-                    placeholder="Brief bio of the founder"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Bio
+                </label>
+                <textarea
+                  name="bio"
+                  value={founder.bio}
+                  onChange={(e) => handleFounderChange(index, e)}
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                  placeholder="Short bio about the founder"
+                />
+                {validationErrors[`founders[${index}].bio`] && (
+                  <p className="mt-1 text-sm text-red-600">{validationErrors[`founders[${index}].bio`]}</p>
+                )}
               </div>
             </div>
+          </div>
           ))}
-          
           <button
             type="button"
             onClick={addFounder}
-            className="mt-4 flex items-center text-indigo-600 hover:text-indigo-800 transition-colors duration-200"
+            className="mt-4 flex items-center text-black hover:text-black transition-colors duration-200"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
             Add Another Founder
           </button>
-        </div>
-      </div>
+         </div>
+         {/* Navigation Buttons */}
+         <div className="flex justify-between mt-4">
+                <button
+                  type="button"
+                  onClick={goToPrevSection}
+                  className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-all duration-300"
+                >
+                  Previous
+                </button>
 
-      {/* Funding Rounds Section */}
+                <button
+                  type="button"
+                  onClick={goToNextSection}
+                  className="bg-black text-white px-6 py-3 rounded-lg hover:bg-black transition-all duration-300"
+                >
+                  Next
+                </button>
+                </div>
+
+      
+       </div>
+
+       {/* Funding Rounds Section */}
       <div className={activeSection === 'funding' ? 'block' : 'hidden'}>
         <div className="border-b border-gray-200 pb-6">
-          <h3 className="text-xl font-semibold mb-4 text-indigo-600">Funding Rounds</h3>
-          
+          <h3 className="text-xl font-semibold mb-4 text-black">Funding Rounds</h3>
+
           {formData.fundingRounds && formData.fundingRounds.map((round, index) => (
             <div key={index} className="mb-8 p-6 bg-gray-50 rounded-lg shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-lg font-medium text-gray-800">Funding Round {index + 1}</h4>
-                <button
-                  type="button"
-                  onClick={() => removeFundingRound(index)}
-                  className="text-red-500 hover:text-red-700 transition-colors duration-200"
-                >
-                  Remove
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => removeFundingRound(index)}
+                    className="text-red-500 hover:text-red-700 transition-colors duration-200"
+                  >
+                    Remove
+                  </button>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="transition-all duration-300 transform hover:scale-105">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Stage*
+                    Stage *
                   </label>
                   <select
                     name="stage"
                     value={round.stage}
                     onChange={(e) => handleFundingRoundChange(index, e)}
                     required
-                    className={`w-full px-4 py-3 border ${validationErrors[`fundingRounds[${index}].stage`] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
+                    className={`w-full px-4 py-3 border ${validationErrors[`fundingRounds[${index}].stage`] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
                   >
                     <option value="">Select Stage</option>
                     {fundingStages.map(stage => (
@@ -1029,9 +1251,9 @@ const StartupForm: React.FC = () => {
                   {validationErrors[`fundingRounds[${index}].stage`] && (
                     <p className="mt-1 text-sm text-red-600">{validationErrors[`fundingRounds[${index}].stage`]}</p>
                   )}
-                </div>
+                </div>  
 
-                <div className="transition-all duration-300 transform hover:scale-105">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Date
                   </label>
@@ -1040,29 +1262,33 @@ const StartupForm: React.FC = () => {
                     name="date"
                     value={round.date}
                     onChange={(e) => handleFundingRoundChange(index, e)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                    className={`w-full px-4 py-3 border ${validationErrors[`fundingRounds[${index}].date`] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                    placeholder="Enter date of funding round"
                   />
+                  {validationErrors[`fundingRounds[${index}].date`] && (
+                    <p className="mt-1 text-sm text-red-600">{validationErrors[`fundingRounds[${index}].date`]}</p>
+                  )}
                 </div>
 
-                <div className="transition-all duration-300 transform hover:scale-105">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Amount (USD)
+                    Amount Raised
                   </label>
                   <input
                     type="number"
                     name="amount"
                     value={round.amount}
                     onChange={(e) => handleFundingRoundChange(index, e)}
-                    min="0"
-                    className={`w-full px-4 py-3 border ${validationErrors[`fundingRounds[${index}].amount`] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
-                    placeholder="0"
+                    className={`w-full px-4 py-3 border ${validationErrors[`fundingRounds[${index}].amountRaised`] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                    placeholder="Enter amount raised in this round"
                   />
-                  {validationErrors[`fundingRounds[${index}].amount`] && (
-                    <p className="mt-1 text-sm text-red-600">{validationErrors[`fundingRounds[${index}].amount`]}</p>
+                  {validationErrors[`fundingRounds[${index}].amountRaised`] && (
+                    <p className="mt-1 text-sm text-red-600">{validationErrors[`fundingRounds[${index}].amountRaised`]}</p>
                   )}
+
                 </div>
 
-                <div className="transition-all duration-300 transform hover:scale-105">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Valuation (USD)
                   </label>
@@ -1072,29 +1298,32 @@ const StartupForm: React.FC = () => {
                     value={round.valuation || ''}
                     onChange={(e) => handleFundingRoundChange(index, e)}
                     min="0"
-                    className={`w-full px-4 py-3 border ${validationErrors[`fundingRounds[${index}].valuation`] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
-                    placeholder="0"
+                    className={`w-full px-4 py-3 border ${validationErrors[`fundingRounds[${index}].valuation`] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                    placeholder="Enter valuation in USD"
                   />
                   {validationErrors[`fundingRounds[${index}].valuation`] && (
                     <p className="mt-1 text-sm text-red-600">{validationErrors[`fundingRounds[${index}].valuation`]}</p>
                   )}
                 </div>
 
-                <div className="transition-all duration-300 transform hover:scale-105 md:col-span-2">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Investors (comma separated)
+                    Investors
                   </label>
                   <input
                     type="text"
-                    name="investors"
+                    name="investors (comma separated)"
                     value={round.investors?.join(', ') || ''}
                     onChange={(e) => handleInvestorsChange(index, e)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
-                    placeholder="Investor A, Investor B, Investor C"
+                    className={`w-full px-4 py-3 border ${validationErrors[`fundingRounds[${index}].investors`] ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                    placeholder="List of investors"
                   />
+                  {validationErrors[`fundingRounds[${index}].investors`] && (
+                    <p className="mt-1 text-sm text-red-600">{validationErrors[`fundingRounds[${index}].investors`]}</p>
+                  )}
                 </div>
 
-                <div className="transition-all duration-300 transform hover:scale-105 md:col-span-2">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Notes
                   </label>
@@ -1103,18 +1332,20 @@ const StartupForm: React.FC = () => {
                     value={round.notes || ''}
                     onChange={(e) => handleFundingRoundChange(index, e)}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
-                    placeholder="Additional information about this funding round"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                    placeholder="Additional notes about the funding round"
                   />
+                  {validationErrors[`fundingRounds[${index}].notes`] && (
+                    <p className="mt-1 text-sm text-red-600">{validationErrors[`fundingRounds[${index}].notes`]}</p>
+                  )}
                 </div>
               </div>
             </div>
           ))}
-          
           <button
             type="button"
             onClick={addFundingRound}
-            className="mt-4 flex items-center text-indigo-600 hover:text-indigo-800 transition-colors duration-200"
+            className="mt-4 flex items-center text-black hover:text-black transition-colors duration-200"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -1122,42 +1353,37 @@ const StartupForm: React.FC = () => {
             Add Funding Round
           </button>
         </div>
+
+        <div className='flex justify-between pt-6'>
+          <button
+            type="button"
+            onClick={() =>  navigate(-1)}
+            className="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-all duration-300"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={isSubmitting || loading}
+            className={`bg-black text-white px-6 py-3 rounded-lg hover:bg-black transition-all duration-300 ${isSubmitting || loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {(isSubmitting || loading) ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                <span>{isEditing ? 'Updating...' : 'Creating...'}</span>
+
+              </>
+            ) : (
+              <span>{isEditing ? 'Update Startup' : 'List Startup'}</span>
+            )}
+          </button> 
+        </div>
       </div>
-      
-      <div className="flex justify-between pt-6">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-all duration-300 transform hover:scale-105 shadow-md"
-        >
-          Cancel
-        </button>
-        
-        <button
-          type="submit"
-          disabled={isSubmitting || loading}
-          className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-md hover:shadow-lg flex items-center"
-        >
-          {(isSubmitting || loading) ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-              <span>{isEditing ? 'Updating...' : 'Creating...'}</span>
-            </>
-          ) : (
-            isEditing ? 'Update Startup' : 'List Startup'
-          )}
-        </button>
-      </div>
-    </form>
+      </form>
   );
-}
+};
+
 export default StartupForm;
 
-
-
-
-
-
-
-
-
+        
