@@ -41,6 +41,7 @@ import StartupProfile from './pages/Startup/StartupProfile';
 import WaitlistPage from './pages/WaitlistPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import ResendVerificationPage from './pages/Auth/ResendVerificationPage';
+import InvestorHomePage from './pages/Investor/InvestorHomePage';
 // import VerifyResultPage from './pages/Auth/VerifyResultPage';
 
 const App: React.FC = () => {
@@ -62,8 +63,11 @@ const App: React.FC = () => {
             <Route path='/waitlist' element={<WaitlistPage />} />
             <Route path="/coming-soon" element={<ComingSoonPage />} />
 
+            {/* Investors Page */}
+            <Route path="/investor" element={<InvestorHomePage />} />
+
             {/* Public Route */}
-            <Route path="/directory" element={<StartupDirectory />} />
+            <Route path="/startups" element={<StartupDirectory />} />
             <Route path="/startup-profile/:id" element={<StartupProfile />} />
 
 

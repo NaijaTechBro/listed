@@ -241,7 +241,7 @@ const StartupDirectory: React.FC = () => {
           {/* Filter buttons */}
           <div className="flex justify-start">
             <button
-              className="bg-black text-white px-5 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="bg-black text-white px-5 py-2 rounded-md hover:bg-gray focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
               onClick={applyFilters}
             >
               Apply Filters

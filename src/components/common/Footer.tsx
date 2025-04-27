@@ -21,8 +21,8 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="font-bold mb-4">Startups</h3>
             <ul className="space-y-2">
-              <li><Link to="/directory" className="hover:underline">All Startups</Link></li>
-              <li><Link to="/directory" className="hover:underline">Profiles<span className="text-xs bg-blue-100 px-1 py-0.5 rounded">Popular</span></Link></li>
+              <li><Link to="/startups" className="hover:underline">All Startups</Link></li>
+              <li><Link to="/startups" className="hover:underline">Profiles<span className="text-xs bg-blue-100 px-1 py-0.5 rounded">Popular</span></Link></li>
               <li><Link to="/coming-soon" className="hover:underline">Integrations </Link></li>
               <li><Link to="/coming-soon" className="hover:underline">Pitch Deck Builder<span className="text-xs bg-green-100 px-1 py-0.5 rounded">New</span></Link></li>
               <li><Link to="/coming-soon" className="hover:underline">Get Featured</Link></li>
@@ -33,12 +33,12 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="font-bold mb-4">Sectors</h3>
             <ul className="space-y-2">
-              <li><Link to="/directory" className="hover:underline">Fintech</Link></li>
-              <li><Link to="/directory" className="hover:underline">Healthtech</Link></li>
-              <li><Link to="/directory" className="hover:underline">Edtech</Link></li>
-              <li><Link to="/directory" className="hover:underline">Web3</Link></li>
-              <li><Link to="/directory" className="hover:underline">E-commerce</Link></li>
-              <li><Link to="/directory" className="hover:underline">All Sectors</Link></li>
+              <li><Link to="/startups" className="hover:underline">Fintech</Link></li>
+              <li><Link to="/startups" className="hover:underline">Healthtech</Link></li>
+              <li><Link to="/startups" className="hover:underline">Edtech</Link></li>
+              <li><Link to="/startups" className="hover:underline">Web3</Link></li>
+              <li><Link to="/startups" className="hover:underline">E-commerce</Link></li>
+              <li><Link to="/startups" className="hover:underline">All Sectors</Link></li>
             </ul>
           </div>
 

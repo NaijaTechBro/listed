@@ -46,7 +46,7 @@ const HomePage: React.FC = () => {
             {['Fintech', 'Healthtech', 'Edtech', 'Agritech', 'E-commerce', 'Clean Energy', 'Logistics', 'AI & ML'].map((category) => (
               <Link 
                 key={category}
-                to={`/directory?category=${category.toLowerCase()}`} 
+                to={`/startups?category=${category.toLowerCase()}`} 
                 className="bg-white rounded-lg p-6 shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-b-4 border-transparent hover:border-indigo-500"
               >
                 <div className="text-xl font-medium text-indigo-700">{category}</div>
@@ -75,7 +75,7 @@ const HomePage: React.FC = () => {
                   Discover promising African startups across various stages. Filter by sector, location, 
                   and metrics to find your next investment opportunity.
                 </p>
-                <Link to="/investors">
+                <Link to="/investor">
                   <button className="bg-indigo-600 text-white px-6 py-3 rounded-md font-medium hover:bg-indigo-700">
                     Investor Access
                   </button>

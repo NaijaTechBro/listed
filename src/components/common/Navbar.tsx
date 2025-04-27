@@ -55,10 +55,10 @@ const Navbar: React.FC = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex space-x-4 lg:space-x-6">
             <div className="relative group">
-              <Link to="/directory" className="font-medium hover:text-indigo-600 transition-colors">Startups</Link>
+              <Link to="/startups" className="font-medium hover:text-indigo-600 transition-colors">Startups</Link>
             </div>
             <div className="relative group">
-              <Link to="/coming-soon" className="font-medium hover:text-indigo-600 transition-colors">For Investors</Link>
+              <Link to="/investor" className="font-medium hover:text-indigo-600 transition-colors">For Investors</Link>
             </div>
             <div className="relative group">
               <Link to="/coming-soon" className="font-medium hover:text-indigo-600 transition-colors">Pitch Deck Builder</Link>
@@ -111,7 +111,7 @@ const Navbar: React.FC = () => {
           <div className="md:hidden absolute top-full left-0 right-0 bg-white shadow-md z-50 border-t border-gray-100">
             <div className="flex flex-col py-4 px-8">
               <Link 
-                to="/directory" 
+                to="/startups" 
                 className="py-2 font-medium hover:text-indigo-600"
                 onClick={() => setIsMenuOpen(false)}
               >

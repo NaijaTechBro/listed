@@ -174,7 +174,7 @@ const DashboardPage: React.FC = () => {
           </Link>
 
           {/* Browse Directory */}
-          <Link to="/directory" className="block">
+          <Link to="/startups" className="block">
             <div className="bg-white rounded-xl p-6 border border-gray-200 hover:border-indigo-300 transition-all duration-300">
               <div className="flex flex-col items-center text-center">
                 <div className="h-16 w-16 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mb-4">

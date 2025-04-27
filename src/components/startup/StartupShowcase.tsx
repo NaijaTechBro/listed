@@ -172,7 +172,7 @@ const StartupShowcase: React.FC<ExtendedStartupShowcaseProps> = ({
             {showViewAll && (
               <div className="text-center mt-10">
                 <Link
-                  to={category ? `/directory?category=${encodeURIComponent(category.toLowerCase())}` : "/directory"}
+                  to={category ? `/startups?category=${encodeURIComponent(category.toLowerCase())}` : "/startups"}
                   className="inline-block bg-white text-indigo-600 border border-indigo-600 px-6 py-3 rounded-lg hover:bg-indigo-50 transition-colors"
                 >
                   View All Startups
