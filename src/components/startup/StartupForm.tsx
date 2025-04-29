@@ -199,52 +199,6 @@ const StartupForm: React.FC = () => {
     }
   };
 
-// // Fix the handleChange function to properly clear errors
-// const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-//   const { name, value } = e.target;
-  
-//   // First update the form data
-//   if (name.includes('.')) {
-//     const [parent, child] = name.split('.');
-    
-//     setFormData(prev => {
-//       const parentObject = prev[parent as keyof typeof prev] || {};
-      
-//       if (typeof parentObject === 'object' && parentObject !== null) {
-//         return {
-//           ...prev,
-//           [parent]: {
-//             ...parentObject,
-//             [child]: parent === 'metrics' ? 
-//               (child === 'fundingTotal' || child === 'employees' ? 
-//                 Number(value) : value) : 
-//               value
-//           }
-//         };
-//       }
-//       return prev;
-//     });
-//   } else {
-//     setFormData(prev => ({ ...prev, [name]: value }));
-//   }
-
-//   // Clear validation error for this field
-//   setValidationErrors(prev => {
-//     const updated = {...prev};
-//     // For nested fields like metrics.fundingTotal, match the exact error key
-//     if (updated[name]) {
-//       delete updated[name];
-//     }
-//     return updated;
-//   });
-  
-//   // Use a timeout to ensure the state has been updated before validating
-//   setTimeout(() => {
-//     validateSection(activeSection);
-//   }, 0);
-// };
-
-
 // Fix the handleChange function to properly clear errors
 const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
   const { name, value } = e.target;
@@ -1559,5 +1513,3 @@ const validateSection = (section: string, isInitialLoad = false): boolean => {
 };
 
 export default StartupForm;
-
-
