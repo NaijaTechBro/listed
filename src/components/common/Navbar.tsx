@@ -118,7 +118,7 @@ const Navbar: React.FC = () => {
                 Startups
               </Link>
               <Link 
-                to="/coming-soon" 
+                to="/investor" 
                 className="py-2 font-medium hover:text-indigo-600"
                 onClick={() => setIsMenuOpen(false)}
               >
