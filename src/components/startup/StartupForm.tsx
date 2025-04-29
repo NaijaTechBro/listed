@@ -27,13 +27,13 @@ const StartupForm: React.FC = () => {
   const [activeSection, setActiveSection] = useState<'basic' | 'location' | 'metrics' | 'social' | 'founders' | 'funding'>('basic');
   const sections = ['basic', 'location', 'metrics', 'social', 'founders', 'funding'];
   
-  // Track section completion status
+  // Track section completion status - default to true when editing
   const [sectionStatus, setSectionStatus] = useState<Record<string, boolean>>({
-    basic: false,
-    location: false,
+    basic: isEditing,
+    location: isEditing,
     metrics: true, // Optional fields, so default to true
     social: true,  // Optional fields, so default to true
-    founders: false,
+    founders: isEditing,
     funding: true  // Optional fields, so default to true
   });
   
@@ -85,6 +85,7 @@ const StartupForm: React.FC = () => {
   // Form submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [formIsValid, setFormIsValid] = useState(!isEditing); // Default to invalid for new startups, valid for editing
   
   // Global validation message
   const [showGlobalValidation, setShowGlobalValidation] = useState(false);
@@ -103,55 +104,77 @@ const StartupForm: React.FC = () => {
     };
   }, [isEditing, id, getStartup, clearStartup, clearStartupError]);
 
-  // Populate form when startup data loads
+  // Populate form when startup data loads and validate all sections
   useEffect(() => {
     if (startup && isEditing) {
-      setFormData({
-        name: startup.name || '',
-        logo: startup.logo || '',
-        tagline: startup.tagline || '',
-        description: startup.description || '',
-        website: startup.website || '',
-        foundingDate: startup.foundingDate || '',
-        category: startup.category || '',
-        subCategory: startup.subCategory || '',
-        country: startup.country || '',
-        city: startup.city || '',
-        stage: startup.stage || '',
-        products: startup.products || '',
-        metrics: {
-          fundingTotal: startup.metrics?.fundingTotal || 0,
-          employees: startup.metrics?.employees || 1,
-          connections: startup.metrics?.connections || 0,
-          views: startup.metrics?.views || 0,
-          revenue: startup.metrics?.revenue || 'Undisclosed'
-        },
-        socialProfiles: {
-          linkedin: startup.socialProfiles?.linkedin || '',
-          twitter: startup.socialProfiles?.twitter || '',
-          facebook: startup.socialProfiles?.facebook || '',
-          instagram: startup.socialProfiles?.instagram || ''
-        },
-        founders: startup.founders && startup.founders.length > 0 
-          ? startup.founders.map(founder => ({
-              name: founder.name || '',
-              role: founder.role || '',
-              linkedin: founder.linkedin || '',
-              bio: founder.bio || ''
-            }))
-          : [{ name: '', role: '', linkedin: '', bio: '' }],
-        fundingRounds: startup.fundingRounds || []
-      });
+      try {
+        // Format logo string to ensure it's a valid string
+        const logoUrl = typeof startup.logo === 'string' ? startup.logo : '';
       
-      // Set logo preview if exists
-      if (startup.logo) {
-        setLogoPreview(startup.logo);
+        setFormData({
+          name: startup.name || '',
+          logo: logoUrl,
+          tagline: startup.tagline || '',
+          description: startup.description || '',
+          website: startup.website || '',
+          foundingDate: startup.foundingDate || '',
+          category: startup.category || '',
+          subCategory: startup.subCategory || '',
+          country: startup.country || '',
+          city: startup.city || '',
+          stage: startup.stage || '',
+          products: startup.products || '',
+          metrics: {
+            fundingTotal: startup.metrics?.fundingTotal || 0,
+            employees: startup.metrics?.employees || 1,
+            connections: startup.metrics?.connections || 0,
+            views: startup.metrics?.views || 0,
+            revenue: startup.metrics?.revenue || 'Undisclosed'
+          },
+          socialProfiles: {
+            linkedin: startup.socialProfiles?.linkedin || '',
+            twitter: startup.socialProfiles?.twitter || '',
+            facebook: startup.socialProfiles?.facebook || '',
+            instagram: startup.socialProfiles?.instagram || ''
+          },
+          founders: startup.founders && startup.founders.length > 0 
+            ? startup.founders.map(founder => ({
+                name: founder.name || '',
+                role: founder.role || '',
+                linkedin: founder.linkedin || '',
+                bio: founder.bio || ''
+              }))
+            : [{ name: '', role: '', linkedin: '', bio: '' }],
+          fundingRounds: startup.fundingRounds || []
+        });
+        
+        // Set logo preview if exists and is a string
+        if (logoUrl) {
+          setLogoPreview(logoUrl);
+        }
+        
+        // For editing, default all sections to valid and then re-validate
+        setSectionStatus({
+          basic: true,
+          location: true,
+          metrics: true,
+          social: true,
+          founders: true,
+          funding: true
+        });
+        
+        // Set form as initially valid when editing
+        setFormIsValid(true);
+        
+        // Validate all sections with loaded data for completeness
+        setTimeout(() => {
+          validateSection('basic', true);
+          validateSection('location', true);
+          validateSection('founders', true);
+        }, 0);
+      } catch (error) {
+        console.error("Error processing startup data:", error);
       }
-      
-      // Check initial section completion
-      validateSection('basic');
-      validateSection('location');
-      validateSection('founders');
     }
   }, [startup, isEditing]);
 
@@ -176,46 +199,107 @@ const StartupForm: React.FC = () => {
     }
   };
 
-  // Fixed handleChange function to properly handle nested properties
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+// // Fix the handleChange function to properly clear errors
+// const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+//   const { name, value } = e.target;
+  
+//   // First update the form data
+//   if (name.includes('.')) {
+//     const [parent, child] = name.split('.');
     
-    // Clear validation error for this field when changed
-    if (validationErrors[name]) {
-      setValidationErrors(prev => {
-        const updated = {...prev};
-        delete updated[name];
-        return updated;
-      });
-    }
-    
-    // Handle nested properties
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
+//     setFormData(prev => {
+//       const parentObject = prev[parent as keyof typeof prev] || {};
       
-      setFormData(prev => {
-        // Create a safe copy of the nested object, defaulting to empty object if undefined
-        const parentObject = prev[parent as keyof typeof prev] || {};
-        
-        // Type guard to ensure we're dealing with an object
-        if (typeof parentObject === 'object' && parentObject !== null) {
-          return {
-            ...prev,
-            [parent]: {
-              ...parentObject,
-              [child]: parent === 'metrics' ? 
-                (child === 'fundingTotal' || child === 'employees' ? 
-                  Number(value) : value) : 
-                value
-            }
-          };
-        }
-        return prev;
-      });
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+//       if (typeof parentObject === 'object' && parentObject !== null) {
+//         return {
+//           ...prev,
+//           [parent]: {
+//             ...parentObject,
+//             [child]: parent === 'metrics' ? 
+//               (child === 'fundingTotal' || child === 'employees' ? 
+//                 Number(value) : value) : 
+//               value
+//           }
+//         };
+//       }
+//       return prev;
+//     });
+//   } else {
+//     setFormData(prev => ({ ...prev, [name]: value }));
+//   }
+
+//   // Clear validation error for this field
+//   setValidationErrors(prev => {
+//     const updated = {...prev};
+//     // For nested fields like metrics.fundingTotal, match the exact error key
+//     if (updated[name]) {
+//       delete updated[name];
+//     }
+//     return updated;
+//   });
+  
+//   // Use a timeout to ensure the state has been updated before validating
+//   setTimeout(() => {
+//     validateSection(activeSection);
+//   }, 0);
+// };
+
+
+// Fix the handleChange function to properly clear errors
+const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const { name, value } = e.target;
+  
+  // First update the form data
+  if (name.includes('.')) {
+    const [parent, child] = name.split('.');
+    
+    setFormData(prev => {
+      const parentObject = prev[parent as keyof typeof prev] || {};
+      
+      if (typeof parentObject === 'object' && parentObject !== null) {
+        return {
+          ...prev,
+          [parent]: {
+            ...parentObject,
+            [child]: parent === 'metrics' ? 
+              (child === 'fundingTotal' || child === 'employees' ? 
+                Number(value) : value) : 
+              value
+          }
+        };
+      }
+      return prev;
+    });
+  } else {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }
+
+  // Clear validation error for this field immediately
+  setValidationErrors(prev => {
+    const updated = {...prev};
+    if (updated[name]) {
+      delete updated[name];
     }
-  };
+    return updated;
+  });
+  
+  // For select fields (category and stage), immediately update section status
+  if (name === 'category' || name === 'stage') {
+    const updatedFormData = { ...formData, [name]: value };
+    const isValid = validateFieldsInSection('basic', updatedFormData);
+    
+    setSectionStatus(prev => ({
+      ...prev,
+      basic: isValid
+    }));
+  } else {
+    // For other fields, use timeout to validate the section after state updates
+    setTimeout(() => {
+      validateSection(activeSection);
+    }, 0);
+  }
+};
+
 
   // Founder change handler
   const handleFounderChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -233,13 +317,18 @@ const StartupForm: React.FC = () => {
     
     // Clear validation errors for this field
     const errorKey = `founders[${index}].${name}`;
-    if (validationErrors[errorKey]) {
-      setValidationErrors(prev => {
-        const updated = {...prev};
+    setValidationErrors(prev => {
+      const updated = {...prev};
+      if (updated[errorKey]) {
         delete updated[errorKey];
-        return updated;
-      });
-    }
+      }
+      return updated;
+    });
+ 
+     // Use timeout to ensure state updates before validation
+  setTimeout(() => {
+    validateSection('founders');
+  }, 0);
   };
 
   // Add new founder
@@ -260,8 +349,13 @@ const StartupForm: React.FC = () => {
         ...prev,
         founders: newFounders
       }));
+      
+      // Revalidate founders section
+      validateSection('founders');
     }
   };
+
+  
 
   // Funding round handlers
   const handleFundingRoundChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -278,16 +372,22 @@ const StartupForm: React.FC = () => {
       fundingRounds: newRounds
     }));
     
-    // Clear validation errors
-    const errorKey = `fundingRounds[${index}].${name}`;
-    if (validationErrors[errorKey]) {
-      setValidationErrors(prev => {
-        const updated = {...prev};
-        delete updated[errorKey];
-        return updated;
-      });
+  // Clear validation errors
+  const errorKey = `fundingRounds[${index}].${name}`;
+  setValidationErrors(prev => {
+    const updated = {...prev};
+    if (updated[errorKey]) {
+      delete updated[errorKey];
     }
-  };
+    return updated;
+  });
+  
+    
+  // Use timeout to ensure state updates before validation
+  setTimeout(() => {
+    validateSection('funding');
+  }, 0);
+};
 
   // Add funding round
   const addFundingRound = () => {
@@ -315,6 +415,9 @@ const StartupForm: React.FC = () => {
       ...prev,
       fundingRounds: newRounds
     }));
+    
+    // Revalidate funding section
+    validateSection('funding');
   };
 
   // Handle investors for funding rounds
@@ -332,111 +435,182 @@ const StartupForm: React.FC = () => {
       ...prev,
       fundingRounds: newRounds
     }));
+    
+    // Revalidate funding section
+    validateSection('funding');
   };
 
-  // Validate specific section
-  const validateSection = (section: string): boolean => {
-    const errors: Record<string, string> = {};
-    let isValid = true;
+
+
+  // Add a new helper function to validate specific fields in a section
+const validateFieldsInSection = (section: string, data = formData): boolean => {
+  let isValid = true;
+  
+  // Only check the specific fields we care about based on section
+  if (section === 'basic') {
+    if (!data.name.trim()) isValid = false;
+    if (!data.tagline.trim()) isValid = false;
+    if (data.tagline.length > 100) isValid = false;
+    if (!data.description.trim()) isValid = false;
+    if (!data.category.trim()) isValid = false;
+    if (!data.stage.trim()) isValid = false;
     
-    switch(section) {
-      case 'basic':
-        if (!formData.name) {
-          errors.name = 'Startup name is required';
-          isValid = false;
-        }
-        if (!formData.tagline) {
-          errors.tagline = 'Tagline is required';
-          isValid = false;
-        }
-        if (formData.tagline.length > 100) {
-          errors.tagline = 'Tagline must be less than 100 characters';
-          isValid = false;
-        }
-        if (!formData.description) {
-          errors.description = 'Description is required';
-          isValid = false;
-        }
-        if (formData.logo && !logoFile && !/^https?:\/\/.+/.test(formData.logo)) {
-          errors.logo = 'Please enter a valid URL or upload an image';
-          isValid = false;
-        }
-        if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
-          errors.website = 'Please enter a valid URL';
-          isValid = false;
-        }
-        if (!formData.category) {
-          errors.category = 'Category is required';
-          isValid = false;
-        }
-        if (!formData.stage) {
-          errors.stage = 'Stage is required';
-          isValid = false;
-        }
-        break;
-        
-      case 'location':
-        if (!formData.country) {
-          errors.country = 'Country is required';
-          isValid = false;
-        }
-        break;
-        
-      case 'social':
-        Object.entries(formData.socialProfiles).forEach(([key, value]) => {
-          if (value && !/^https?:\/\/.+/.test(value)) {
-            errors[`socialProfiles.${key}`] = 'Please enter a valid URL';
-            isValid = false;
-          }
-        });
-        break;
-        
-      case 'founders':
-        let hasValidFounder = false;
-        formData.founders.forEach((founder, index) => {
-          if (founder.name) {
-            hasValidFounder = true;
-          }
-          if (founder.linkedin && !/^https?:\/\/.+/.test(founder.linkedin)) {
-            errors[`founders[${index}].linkedin`] = 'Please enter a valid LinkedIn URL';
-            isValid = false;
-          }
-        });
-        if (!hasValidFounder) {
-          errors['founders[0].name'] = 'At least one founder name is required';
-          isValid = false;
-        }
-        break;
-        
-      case 'funding':
-        formData.fundingRounds?.forEach((round, index) => {
-          if (round.stage) {
-            if (round.amount && round.amount < 0) {
-              errors[`fundingRounds[${index}].amount`] = 'Amount cannot be negative';
-              isValid = false;
-            }
-            if (round.valuation && round.valuation < 0) {
-              errors[`fundingRounds[${index}].valuation`] = 'Valuation cannot be negative';
-              isValid = false;
-            }
-          }
-        });
-        break;
+    // Logo validation if needed
+    if (data.logo && !logoFile && typeof data.logo === 'string' && !data.logo.startsWith('http')) {
+      isValid = false;
     }
     
-    // Update validation errors
-    setValidationErrors(prev => ({
-      ...prev,
-      ...errors
-    }));
+    // Website validation if needed
+    if (data.website && !data.website.startsWith('http')) {
+      isValid = false;
+    }
+  }
+  
+  return isValid;
+};
+
+// Modify the validateSection function to use our helper
+const validateSection = (section: string, isInitialLoad = false): boolean => {
+  const errors: Record<string, string> = {};
+  let isValid = true;
+  
+  // Skip validation on initial load for editing if we choose to
+  if (isEditing && isInitialLoad) {
+    return true;
+  }
+  
+  switch(section) {
+    case 'basic':
+      if (!formData.name.trim()) {
+        errors.name = 'Startup name is required';
+        isValid = false;
+      }
+      if (!formData.tagline.trim()) {
+        errors.tagline = 'Tagline is required';
+        isValid = false;
+      }
+      if (formData.tagline.length > 100) {
+        errors.tagline = 'Tagline must be less than 100 characters';
+        isValid = false;
+      }
+      if (!formData.description.trim()) {
+        errors.description = 'Description is required';
+        isValid = false;
+      }
+      if (formData.logo && !logoFile && typeof formData.logo === 'string' && !formData.logo.startsWith('http')) {
+        errors.logo = 'Please enter a valid URL or upload an image';
+        isValid = false;
+      }
+      if (formData.website && !formData.website.startsWith('http')) {
+        errors.website = 'Please enter a valid URL';
+        isValid = false;
+      }
+      if (!formData.category.trim()) {
+        errors.category = 'Category is required';
+        isValid = false;
+      }
+      if (!formData.stage.trim()) {
+        errors.stage = 'Stage is required';
+        isValid = false;
+      }
+      break;
+      
+    // Other cases remain the same
+    case 'location':
+      if (!formData.country.trim()) {
+        errors.country = 'Country is required';
+        isValid = false;
+      }
+      break;
+      
+    case 'social':
+      Object.entries(formData.socialProfiles).forEach(([key, value]) => {
+        if (value && typeof value === 'string' && !value.startsWith('http')) {
+          errors[`socialProfiles.${key}`] = 'Please enter a valid URL';
+          isValid = false;
+        }
+      });
+      break;
+      
+    case 'founders':
+      let hasValidFounder = false;
+      formData.founders.forEach((founder, index) => {
+        if (founder.name) {
+          hasValidFounder = true;
+        }
+        if (founder.linkedin && !founder.linkedin.startsWith('http')) {
+          errors[`founders[${index}].linkedin`] = 'Please enter a valid LinkedIn URL';
+          isValid = false;
+        }
+      });
+      if (!hasValidFounder) {
+        errors['founders[0].name'] = 'At least one founder name is required';
+        isValid = false;
+      }
+      break;
+      
+    case 'funding':
+      formData.fundingRounds?.forEach((round, index) => {
+        if (round.stage) {
+          if (round.amount && round.amount < 0) {
+            errors[`fundingRounds[${index}].amount`] = 'Amount cannot be negative';
+            isValid = false;
+          }
+          if (round.valuation && round.valuation < 0) {
+            errors[`fundingRounds[${index}].valuation`] = 'Valuation cannot be negative';
+            isValid = false;
+          }
+        }
+      });
+      break;
+  }
+  
+  // Update validation errors
+  setValidationErrors(prev => {
+    const newErrors = {...prev};
     
-    // Update section status
-    setSectionStatus(prev => ({
-      ...prev,
-      [section]: isValid
-    }));
+    // Remove old errors for this section
+    Object.keys(prev).forEach(key => {
+      if ((section === 'basic' && (key === 'category' || key === 'stage' || key === 'name' || key === 'tagline' || key === 'description' || key === 'logo' || key === 'website')) ||
+          (section === 'location' && key === 'country') ||
+          (section === 'social' && key.startsWith('socialProfiles')) ||
+          (section === 'founders' && key.startsWith('founders')) ||
+          (section === 'funding' && key.startsWith('fundingRounds'))) {
+        delete newErrors[key];
+      }
+    });
     
-    return isValid;
+    // Add new errors
+    return {...newErrors, ...errors};
+  });
+  
+  // Update section status
+  setSectionStatus(prev => ({
+    ...prev,
+    [section]: isValid
+  }));
+  
+  // Check if the entire form is valid
+  if (!isInitialLoad) {
+    checkFormValidity();
+  }
+  
+  return isValid;
+};
+
+
+  // Check if all required sections are valid
+  const checkFormValidity = () => {
+    const allSectionsValid = 
+      sectionStatus.basic && 
+      sectionStatus.location && 
+      sectionStatus.metrics && 
+      sectionStatus.social && 
+      sectionStatus.founders && 
+      sectionStatus.funding;
+    
+    setFormIsValid(allSectionsValid);
+    return allSectionsValid;
   };
 
   // Validate all sections
@@ -503,7 +677,7 @@ const StartupForm: React.FC = () => {
       // Add the logo file if one was selected
       if (logoFile) {
         startupFormData.append('logo', logoFile);
-      } else if (formData.logo) {
+      } else if (formData.logo && typeof formData.logo === 'string') {
         // If no new file but URL exists, pass it in formData
         startupFormData.append('logoUrl', formData.logo);
       }
@@ -562,13 +736,13 @@ const StartupForm: React.FC = () => {
   const categories = [
     'SaaS', 'Fintech', 'Healthtech', 'Edtech', 'E-commerce', 
     'AI/ML', 'Blockchain', 'Cleantech', 'Hardware', 'Marketplaces',
-    'Consumer Apps', 'Enterprise Software', 'IoT', 'Gaming', 'Other'
+    'Consumer Apps', 'Enterprise Software', 'IoT', 'Gaming', 'PropTech', 'Web3', 'TravelTech', 'Other'
   ];
 
   // Stages for dropdown
   const stages = [
     'Idea', 'MVP','Pre-seed', 'Seed', 'Series A', 'Series B', 
-    'Series C', 'Series D+', 'Profitable', 'Acquired', 'IPO'
+    'Series C', 'Growth', 'Established'
   ];
 
   // Funding round stages
@@ -632,128 +806,128 @@ const StartupForm: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-          Startup Name*
+                Startup Name*
               </label>
               <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-          className={`w-full px-4 py-3 border ${validationErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
-          placeholder="Enter startup name"
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                className={`w-full px-4 py-3 border ${validationErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                placeholder="Enter startup name"
               />
               {validationErrors.name && (
-          <p className="mt-1 text-sm text-red-600">{validationErrors.name}</p>
+                <p className="mt-1 text-sm text-red-600">{validationErrors.name}</p>
               )}
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-          Logo
+                Logo
               </label>
               <div className="flex items-start space-x-4">
-          <div className="flex-1">
-            {/* Hidden file input */}
-            <input
-              type="file"
-              ref={logoInputRef}
-              onChange={handleLogoChange}
-              accept="image/*"
-              className="hidden"
-            />
-            
-            {/* Custom file upload button */}
-            <button
-              type="button"
-              onClick={triggerLogoUpload}
-              className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg border border-gray-300 w-full flex items-center justify-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-              </svg>
-              Upload Logo
-            </button>
-            
-            {/* Text input for URL (Alternative) */}
-            <div className="mt-2">
-              <input
-                type="url"
-                name="logo"
-                value={formData.logo}
-                onChange={handleChange}
-                className={`w-full px-4 py-3 border ${validationErrors.logo ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
-                placeholder="Or enter logo URL: https://..."
-              />
-            </div>
-          </div>
-          
-          {/* Logo preview */}
-          {logoPreview && (
-            <div className="w-16 h-16 overflow-hidden rounded-md border border-gray-300">
-              <img 
-                src={logoPreview} 
-                alt="Logo preview" 
-                className="w-full h-full object-cover" 
-              />
-            </div>
-          )}
+                <div className="flex-1">
+                  {/* Hidden file input */}
+                  <input
+                    type="file"
+                    ref={logoInputRef}
+                    onChange={handleLogoChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  
+                  {/* Custom file upload button */}
+                  <button
+                    type="button"
+                    onClick={triggerLogoUpload}
+                    className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg border border-gray-300 w-full flex items-center justify-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                    </svg>
+                    Upload Logo
+                  </button>
+                  
+                  {/* Text input for URL (Alternative) */}
+                  <div className="mt-2">
+                    <input
+                      type="url"
+                      name="logo"
+                      value={formData.logo}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-3 border ${validationErrors.logo ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                      placeholder="Or enter logo URL: https://..."
+                    />
+                  </div>
+                </div>
+                
+                {/* Logo preview */}
+                {logoPreview && (
+                  <div className="w-16 h-16 overflow-hidden rounded-md border border-gray-300">
+                    <img 
+                      src={logoPreview} 
+                      alt="Logo preview" 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                )}
               </div>
               {validationErrors.logo && (
-          <p className="mt-1 text-sm text-red-600">{validationErrors.logo}</p>
+                <p className="mt-1 text-sm text-red-600">{validationErrors.logo}</p>
               )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-          Tagline* <span className="text-xs text-gray-500">(max 100 chars)</span>
+                Tagline* <span className="text-xs text-gray-500">(max 100 chars)</span>
               </label>
               <input
-          type="text"
-          name="tagline"
-          value={formData.tagline}
-          onChange={handleChange}
-          required
-          maxLength={100}
-          className={`w-full px-4 py-3 border ${validationErrors.tagline ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
-          placeholder="One-line description of your startup"
+                type="text"
+                name="tagline"
+                value={formData.tagline}
+                onChange={handleChange}
+                required
+                maxLength={100}
+                className={`w-full px-4 py-3 border ${validationErrors.tagline ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                placeholder="One-line description of your startup"
               />
               {validationErrors.tagline && (
-          <p className="mt-1 text-sm text-red-600">{validationErrors.tagline}</p>
+                <p className="mt-1 text-sm text-red-600">{validationErrors.tagline}</p>
               )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-          Website
+                Website
               </label>
               <input
-          type="url"
-          name="website"
-          value={formData.website}
-          onChange={handleChange}
-          className={`w-full px-4 py-3 border ${validationErrors.website ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
-          placeholder="https://..."
+                type="url"
+                name="website"
+                value={formData.website}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 border ${validationErrors.website ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                placeholder="https://..."
               />
               {validationErrors.website && (
-          <p className="mt-1 text-sm text-red-600">{validationErrors.website}</p>
+                <p className="mt-1 text-sm text-red-600">{validationErrors.website}</p>
               )}
             </div>
             
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-          Description*
+                Description*
               </label>
               <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          required
-          rows={4}
-          className={`w-full px-4 py-3 border ${validationErrors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
-          placeholder="Describe your startup in detail"
-              />
-              {validationErrors.description && (
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                required
+                rows={4}
+                className={`w-full px-4 py-3 border ${validationErrors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-black`}
+                placeholder="Describe your startup in detail"
+                />
+          {validationErrors.description && (
           <p className="mt-1 text-sm text-red-600">{validationErrors.description}</p>
               )}
             </div>
@@ -1365,7 +1539,7 @@ const StartupForm: React.FC = () => {
 
           <button
             type="submit"
-            disabled={isSubmitting || loading}
+            disabled={isSubmitting || loading || !formIsValid}
             className={`bg-black text-white px-6 py-3 rounded-lg hover:bg-black transition-all duration-300 ${isSubmitting || loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {(isSubmitting || loading) ? (
@@ -1386,4 +1560,4 @@ const StartupForm: React.FC = () => {
 
 export default StartupForm;
 
-        
+
