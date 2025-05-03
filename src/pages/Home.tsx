@@ -22,11 +22,6 @@ const HomePage: React.FC = () => {
           </svg>
         </Link>
 
-
-
-
-
-
          {/* Dashboard Image - Mobile Responsive */}
           <div className="max-w-5xl mx-auto mt-10">
           <img 
