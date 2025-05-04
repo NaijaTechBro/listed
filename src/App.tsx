@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { StartupProvider } from './context/StartupContext';
+import { VerificationProvider } from './context/VerificationContext';
 
 // Public pages
 import HomePage from './pages/Home';
@@ -14,8 +15,8 @@ import VerificationSentPage from './pages/Auth/User/VerificationSentPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Protected pages
-import DashboardPage from './pages/Dashboard/DashboardPage';
-import Sidebar from './pages/Dashboard/Sidebar';
+import DashboardPage from './pages/Dashboard/Startup/DashboardPage';
+import Sidebar from './pages/Dashboard/Startup/Sidebar';
 import StartupForm from './components/startup/StartupForm';
 // import ProfilePage from './pages/ProfilePage';
 // import SettingsPage from './pages/SettingsPage';
@@ -43,8 +44,14 @@ import StartupProfile from './pages/Startup/StartupProfile';
 import WaitlistPage from './pages/WaitlistPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import ResendVerificationPage from './pages/Auth/User/ResendVerificationPage';
-import InvestorHomePage from './pages/Investor/InvestorHomePage';
-import { VerificationProvider } from './context/VerificationContext';
+import InvestorHomePage from './components/investor/InvestorHomePage';
+import InvestorDashboardPage from './pages/Dashboard/Investor/InvestorDashboardPage';
+import InvestorSidebar from './pages/Dashboard/Investor/InvestorSidebar';
+import InvestorDirectory from './components/investor/InvestorDirectory';
+import InvestorProfilePage from './components/investor/InvestorProfilePage';
+import DealsPage from './pages/Investor/DealsPage';
+import FoundersPage from './pages/Investor/FoundersPage';
+import MarketplacePage from './pages/Investor/MarketplacePage';
 // import VerifyResultPage from './pages/Auth/VerifyResultPage';
 
 const App: React.FC = () => {
@@ -80,6 +87,10 @@ const App: React.FC = () => {
 
             {/* Investors Page */}
             <Route path="/investor" element={<InvestorHomePage />} />
+            <Route path='/marketplace' element={<InvestorDirectory/>} />
+            <Route path="/investor-profile" element={<InvestorProfilePage/>} />
+            {/* <Route path="/deals" element={<DealsPage/>} />
+            <Route path="founders" element={<FoundersPage/>} /> */}
 
             {/* Public Route */}
             <Route path="/startups" element={<StartupDirectory />} />
@@ -94,6 +105,8 @@ const App: React.FC = () => {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/contact" element={<ContactUsPage/>}/>
 
+            
+
             {/* Protected routes for all authenticated users */}
             <Route element={<ProtectedRoute allowedRoles={['founder']} />}>
             <Route path="/request-verification" element={<RequestVerificationPage />} />
@@ -104,6 +117,19 @@ const App: React.FC = () => {
                 <Route path="my-startups" element={<MyStartups />} />
               </Route>
             </Route>
+
+
+               {/* Protected routes for all authenticated users */}
+               <Route element={<ProtectedRoute allowedRoles={['investor']} />}>
+              <Route path="/investor/dashboard" element={<InvestorSidebar />}>
+                <Route index element={<InvestorDashboardPage />} />
+                <Route path="founder" element={<FoundersPage />} />
+                <Route path="deals-room" element={<DealsPage />} />
+                <Route path="marketplace" element={<MarketplacePage/>} />
+              </Route>
+            </Route>
+
+            
 
             {/* Protected routes for admin users */}
             {/* <Route element={<ProtectedRoute allowedRoles={['admin']} />}>

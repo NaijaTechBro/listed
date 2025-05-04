@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import api from '../services/api'; 
-import { User, VerificationResponse } from '../types';// Assuming you have a User type defined in types/user.ts
-
+import { User, VerificationResponse } from '../types';
 
 // Define auth state interface
 interface AuthState {
@@ -23,6 +22,7 @@ interface AuthContextType extends AuthState {
   updateProfile: (userData: Partial<User>) => Promise<void>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   clearError: () => void;
+  userRole: string | null; // Added userRole property
 }
 
 // Create context
@@ -40,6 +40,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading: true,
     error: null
   });
+
+  // Get user role from user object
+  const userRole = authState.user?.role || null;
 
   // Check if user is logged in on mount
   useEffect(() => {
@@ -230,8 +233,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw err;
     }
   };
-
-  // ...
   
   // Resend verification email
   const resendVerification = async (email: string): Promise<VerificationResponse> => {
@@ -256,7 +257,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw err;
     }
   };
-
 
   // Update profile
   const updateProfile = async (userData: Partial<User>) => {
@@ -324,7 +324,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         resendVerification,
         updateProfile,
         updatePassword,
-        clearError
+        clearError,
+        userRole // Include userRole in the context value
       }}
     >
       {children}

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 // import InvestorShowcase from '../components/investor/InvestorShowcase';
 // import PromisedStartups from '../components/investor/PromisedStartups';
-import Navbar from '../../components/common/Navbar';
-import Footer from '../../components/common/Footer';
+import Navbar from '../common/Navbar';
+import Footer from '../common/Footer';
 import investorDashboardPreview from '../../assets/dashboard.png';
 import { Search, Filter, TrendingUp, PieChart, Users, Globe, ChevronRight, Bell } from 'lucide-react';
 

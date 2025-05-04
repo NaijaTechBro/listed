@@ -11,20 +11,35 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
   
-  const { login, isAuthenticated, loading, error, clearError } = useAuth();
+  const { login, isAuthenticated, loading, error, clearError, userRole } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated based on role
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      // Role-based navigation
+      switch (userRole) {
+        case 'investor':
+          navigate('/investor/dashboard');
+          break;
+        case 'admin':
+          navigate('/admin');
+          break;
+        case 'user':
+        case 'founder':
+          navigate('/startups');
+          break;
+        default:
+          // Fallback for any other role or if role is not set
+          navigate('/dashboard');
+      }
     }
     
     // Clear auth errors when component unmounts
     return () => {
       if (error) clearError();
     };
-  }, [isAuthenticated, navigate, error, clearError]);
+  }, [isAuthenticated, navigate, error, clearError, userRole]);
 
   // Set form error if auth error exists and check for unverified email
   useEffect(() => {
@@ -191,8 +206,3 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
-
-
-
-
-

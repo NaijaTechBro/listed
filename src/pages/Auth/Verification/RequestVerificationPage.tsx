@@ -594,7 +594,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../../Dashboard/Sidebar';
+import Sidebar from '../../Dashboard/Startup/Sidebar';
 import AlertMessage from '../../../components/Errors/AlertMessage';
 import { useVerification } from '../../../context/VerificationContext';
 import { useAuth } from '../../../context/AuthContext';

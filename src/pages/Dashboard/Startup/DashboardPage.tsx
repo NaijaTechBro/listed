@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useStartup } from '../../context/StartupContext';
+import { useAuth } from '../../../context/AuthContext';
+import { useStartup } from '../../../context/StartupContext';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();

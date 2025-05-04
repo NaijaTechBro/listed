@@ -3,7 +3,7 @@ import { useStartup } from '../../context/StartupContext';
 import StartupCard from '../../components/startup/StartupCard';
 import { StartupFilter } from '../../types';
 
-const StartupDirectory: React.FC = () => {
+const MarketplacePage: React.FC = () => {
   const { startups, getStartups, loading, count, pagination } = useStartup();
   
   // Filter state
@@ -338,4 +338,4 @@ const StartupDirectory: React.FC = () => {
   );
 };
 
-export default StartupDirectory;
+export default MarketplacePage;
