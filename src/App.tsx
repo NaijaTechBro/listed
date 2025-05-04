@@ -5,12 +5,12 @@ import { StartupProvider } from './context/StartupContext';
 
 // Public pages
 import HomePage from './pages/Home';
-import LoginPage from './pages/Auth/LoginPage';
-import RegisterPage from './pages/Auth/RegisterPage';
-import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
-import ResetPasswordPage from './pages/Auth/ResetPasswordPage';
-import VerifyEmailPage from './pages/Auth/VerifyEmailPage';
-import VerificationSentPage from './pages/Auth/VerificationSentPage';
+import LoginPage from './pages/Auth/User/LoginPage';
+import RegisterPage from './pages/Auth/User/RegisterPage';
+import ForgotPasswordPage from './pages/Auth/User/ForgotPasswordPage';
+import ResetPasswordPage from './pages/Auth/User/ResetPasswordPage';
+import VerifyEmailPage from './pages/Auth/User/VerifyEmailPage';
+import VerificationSentPage from './pages/Auth/User/VerificationSentPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Protected pages
@@ -31,6 +31,8 @@ import UnauthorizedPage from './pages/UnauthorizedPage';
 import StartupDirectory from './pages/Startup/StartupDirectory';
 import AddStartupWrapper from './pages/Startup/AddStartupWrapper';
 
+import RequestVerificationPage from './pages/Auth/Verification/RequestVerificationPage';
+
 import FAQPage from './components/company/FAQPage';
 import AboutPage from './components/company/AboutPage';
 import CareersPage from './components/company/CareerPage';
@@ -40,14 +42,16 @@ import TermsPage from './components/company/TermsPage';
 import StartupProfile from './pages/Startup/StartupProfile';
 import WaitlistPage from './pages/WaitlistPage';
 import ComingSoonPage from './pages/ComingSoonPage';
-import ResendVerificationPage from './pages/Auth/ResendVerificationPage';
+import ResendVerificationPage from './pages/Auth/User/ResendVerificationPage';
 import InvestorHomePage from './pages/Investor/InvestorHomePage';
+import { VerificationProvider } from './context/VerificationContext';
 // import VerifyResultPage from './pages/Auth/VerifyResultPage';
 
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <StartupProvider>
+        <VerificationProvider>
         <Router>
           <Routes>
             {/* Authentication Routes */}
@@ -62,6 +66,17 @@ const App: React.FC = () => {
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path='/waitlist' element={<WaitlistPage />} />
             <Route path="/coming-soon" element={<ComingSoonPage />} />
+
+            
+
+            {/* <Route path="/profile" element={<ProfilePage />} /> */}
+            {/* <Route path="/settings" element={<SettingsPage />} /> */}
+
+            {/* 404 Page */}
+
+            {/* <Route path="/verify-result" element={<VerifyResultPage />} /> */}
+
+            {/* 404 Page */}
 
             {/* Investors Page */}
             <Route path="/investor" element={<InvestorHomePage />} />
@@ -81,6 +96,7 @@ const App: React.FC = () => {
 
             {/* Protected routes for all authenticated users */}
             <Route element={<ProtectedRoute allowedRoles={['founder']} />}>
+            <Route path="/request-verification" element={<RequestVerificationPage />} />
               <Route path="/dashboard" element={<Sidebar />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="add-startup" element={<AddStartupWrapper />} />
@@ -99,6 +115,7 @@ const App: React.FC = () => {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Router>
+        </VerificationProvider>
       </StartupProvider>
     </AuthProvider>
   );
