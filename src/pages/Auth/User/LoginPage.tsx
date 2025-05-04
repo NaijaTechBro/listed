@@ -27,7 +27,7 @@ const LoginPage: React.FC = () => {
           break;
         case 'user':
         case 'founder':
-          navigate('/startups');
+          navigate('/dashboard');
           break;
         default:
           // Fallback for any other role or if role is not set

@@ -304,7 +304,7 @@ const Sidebar: React.FC = () => {
 
           {/* STARTUP Section */}
           <div className="mt-8">
-            <h3 className="px-3 text-xs font-medium text-gray-500 uppercase tracking-wider">STARTUP</h3>
+            <h3 className="px-3 text-xs font-medium text-gray-500 uppercase tracking-wider">INVESTMENT</h3>
             <div className="mt-2 space-y-1">
               <Link
                 to="/investor/dashboard/marketplace"
@@ -320,6 +320,22 @@ const Sidebar: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 11v6M15 11v6" />
                 </svg>
                 <span>MarketPlace</span>
+              </Link>
+
+              <Link
+                to="/investor/dashboard/marketplace"
+                className={`flex items-center px-3 py-2 rounded-md transition-all duration-200 ${
+                  isSidebarLinkActive('/investor/dashboard/marketplace')
+                    ? 'bg-gray-100 text-gray-900 font-medium'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                {/* Marketplace Icon */}
+                <svg className="h-5 w-5 mr-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 11v6M15 11v6" />
+                </svg>
+                <span>Add Investment</span>
               </Link>
               
               <Link
