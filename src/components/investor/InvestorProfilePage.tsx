@@ -1,138 +1,36 @@
 // client/src/pages/InvestorProfilePage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { formatDate } from '../../utils/helpers';
-
-// Mock data for an investor
-const mockInvestors = {
-  '1': {
-    _id: '1',
-    userId: 'user1',
-    name: 'Jessica Anderson',
-    position: 'Managing Partner',
-    organization: 'Horizon Ventures',
-    bio: 'Serial entrepreneur turned investor with a passion for tech innovations that address real-world problems. I focus on early-stage startups with strong technical foundations and clear market opportunities.',
-    profileImage: 'https://randomuser.me/api/portraits/women/44.jpg',
-    investmentFocus: ['B2B SaaS', 'Enterprise Software', 'Deep Tech'],
-    preferredStages: ['Seed', 'Series A'],
-    preferredSectors: ['Fintech', 'Healthtech', 'Climate Tech', 'AI/ML'],
-    preferredCountries: ['United States', 'Canada', 'United Kingdom', 'Germany'],
-    minInvestmentRange: 250000,
-    maxInvestmentRange: 2000000,
-    contactDetails: {
-      email: 'jessica@horizonventures.com',
-      phone: '+1-555-123-4567',
-      website: 'https://www.horizonventures.com'
-    },
-    socialProfiles: {
-      linkedin: 'https://www.linkedin.com/in/jessicaanderson',
-      twitter: 'https://twitter.com/jessanderson'
-    },
-    portfolio: [
-      {
-        startupId: '101',
-        startupName: 'NeuraTech',
-        investmentStage: 'Seed',
-        investmentDate: '2023-05-10T00:00:00.000Z',
-        description: 'AI-driven medical diagnostics platform'
-      },
-      {
-        startupId: '102',
-        startupName: 'EcoGrid',
-        investmentStage: 'Series A',
-        investmentDate: '2022-11-22T00:00:00.000Z',
-        description: 'Smart energy management system for commercial buildings'
-      },
-      {
-        startupId: '103',
-        startupName: 'Finly',
-        investmentStage: 'Seed',
-        investmentDate: '2023-08-15T00:00:00.000Z',
-        description: 'Financial literacy and investment platform for millennials'
-      }
-    ]
-  },
-  '2': {
-    _id: '2',
-    userId: 'user2',
-    name: 'Michael Chen',
-    position: 'Principal',
-    organization: 'BlueOcean Capital',
-    bio: 'Technology investor with 15+ years experience in scaling SaaS businesses. Previously founded two tech startups and served as CTO for a Y Combinator alum.',
-    profileImage: 'https://randomuser.me/api/portraits/men/36.jpg',
-    investmentFocus: ['SaaS', 'Marketplace', 'Consumer Tech'],
-    preferredStages: ['Pre-seed', 'Seed'],
-    preferredSectors: ['E-commerce', 'EdTech', 'PropTech', 'Logistics'],
-    preferredCountries: ['United States', 'Singapore', 'Australia', 'Israel'],
-    minInvestmentRange: 100000,
-    maxInvestmentRange: 1000000,
-    contactDetails: {
-      email: 'mchen@blueocean.vc',
-      phone: '+1-555-987-6543',
-      website: 'https://www.blueocean.vc'
-    },
-    socialProfiles: {
-      linkedin: 'https://www.linkedin.com/in/michaelchen',
-      twitter: 'https://twitter.com/mchen_vc'
-    },
-    portfolio: [
-      {
-        startupId: '201',
-        startupName: 'LearnLoop',
-        investmentStage: 'Pre-seed',
-        investmentDate: '2023-02-05T00:00:00.000Z',
-        description: 'Adaptive learning platform for K-12 education'
-      },
-      {
-        startupId: '202',
-        startupName: 'ShipSmart',
-        investmentStage: 'Seed',
-        investmentDate: '2023-06-18T00:00:00.000Z',
-        description: 'AI-powered logistics optimization for e-commerce'
-      }
-    ]
-  }
-};
-
-// Mock user data
-const mockUser = {
-  _id: 'user1',
-  name: 'Jessica Anderson',
-  email: 'jessica@horizonventures.com'
-};
+import { useInvestor } from '../../context/InvestorContext';
+import { useAuth } from '../../context/AuthContext'; // Assuming you have an auth context
 
 const InvestorProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [investor, setInvestor] = useState<any | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
+  
+  // Use investor context instead of local state
+  const { 
+    investor, 
+    loading, 
+    error, 
+    getInvestor, 
+    clearError 
+  } = useInvestor();
+  
+  // Use auth context to determine if this is the user's own profile
+  const { user } = useAuth();
+  const isOwnProfile = user && investor && user._id === investor.userId;
 
   useEffect(() => {
-    // Simulate API fetch with setTimeout
-    const fetchInvestorData = () => {
-      setTimeout(() => {
-        try {
-          if (!id || !(id in mockInvestors)) {
-            throw new Error('Investor not found');
-          }
-          
-          setInvestor(mockInvestors[id as keyof typeof mockInvestors]);
-          setLoading(false);
-        } catch (error) {
-          console.error('Error fetching investor:', error);
-          setError('Failed to load investor data.');
-          setLoading(false);
-        }
-      }, 800); // Simulate network delay
+    if (id) {
+      getInvestor(id);
+    }
+    
+    // Clear error when component unmounts
+    return () => {
+      clearError();
     };
-
-    fetchInvestorData();
-  }, [id]);
-
-  // For demo purposes, we'll use the mockUser instead of the context
-  // This simulates the authenticated user
-  const mockAuthUser = mockUser;
-  const isOwnProfile = mockAuthUser && investor && mockAuthUser._id === investor.userId;
+  }, [id, getInvestor, clearError]);
 
   if (loading) {
     return (
@@ -193,12 +91,12 @@ const InvestorProfilePage: React.FC = () => {
             </div>
             
             <div className="flex flex-wrap gap-2 mb-6">
-              {investor.investmentFocus.map((focus: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined, index: React.Key | null | undefined) => (
+              {investor.investmentFocus && investor.investmentFocus.map((focus, index) => (
                 <span key={index} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-md text-sm font-medium">
                   {focus}
                 </span>
               ))}
-              {investor.preferredStages.map((stage: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined, index: React.Key | null | undefined) => (
+              {investor.preferredStages && investor.preferredStages.map((stage, index) => (
                 <span key={index} className="bg-purple-100 text-purple-800 px-3 py-1 rounded-md text-sm font-medium">
                   {stage}
                 </span>
@@ -208,7 +106,7 @@ const InvestorProfilePage: React.FC = () => {
             <p className="text-xl text-gray-700 mb-8">{investor.bio}</p>
             
             <div className="flex flex-wrap items-center gap-6">
-              {investor.contactDetails.website && (
+              {investor.contactDetails?.website && (
                 <a 
                   href={investor.contactDetails.website} 
                   target="_blank" 
@@ -222,7 +120,7 @@ const InvestorProfilePage: React.FC = () => {
                 </a>
               )}
               
-              {investor.socialProfiles.linkedin && (
+              {investor.socialProfiles?.linkedin && (
                 <a 
                   href={investor.socialProfiles.linkedin} 
                   target="_blank" 
@@ -236,7 +134,7 @@ const InvestorProfilePage: React.FC = () => {
                 </a>
               )}
               
-              {investor.socialProfiles.twitter && (
+              {investor.socialProfiles?.twitter && (
                 <a 
                   href={investor.socialProfiles.twitter} 
                   target="_blank" 
@@ -250,7 +148,7 @@ const InvestorProfilePage: React.FC = () => {
                 </a>
               )}
               
-              {investor.contactDetails.email && (
+              {investor.contactDetails?.email && (
                 <a 
                   href={`mailto:${investor.contactDetails.email}`}
                   className="flex items-center text-indigo-600 hover:text-indigo-800"
@@ -277,7 +175,7 @@ const InvestorProfilePage: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Sectors</h3>
                   <div className="flex flex-wrap gap-2">
-                    {investor.preferredSectors.map((sector: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined, index: React.Key | null | undefined) => (
+                    {investor.preferredSectors && investor.preferredSectors.map((sector, index) => (
                       <span key={index} className="bg-gray-100 text-gray-800 px-3 py-1 rounded-md text-sm font-medium">
                         {sector}
                       </span>
@@ -288,7 +186,7 @@ const InvestorProfilePage: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Regions</h3>
                   <div className="flex flex-wrap gap-2">
-                    {investor.preferredCountries.map((country: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined, index: React.Key | null | undefined) => (
+                    {investor.preferredCountries && investor.preferredCountries.map((country, index) => (
                       <span key={index} className="bg-gray-100 text-gray-800 px-3 py-1 rounded-md text-sm font-medium">
                         {country}
                       </span>
@@ -306,11 +204,11 @@ const InvestorProfilePage: React.FC = () => {
             </div>
             
             {/* Portfolio */}
-            {investor.portfolio.length > 0 && (
+            {investor.portfolio && investor.portfolio.length > 0 && (
               <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
                 <h2 className="text-2xl font-bold mb-6">Portfolio Companies</h2>
                 <div className="space-y-6">
-                  {investor.portfolio.map((item: { startupId: any; startupName: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; investmentDate: string; investmentStage: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; description: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; }, index: React.Key | null | undefined) => (
+                  {investor.portfolio.map((item, index) => (
                     <div key={index} className="border-l-4 border-indigo-500 pl-4">
                       <div className="flex justify-between items-start">
                         <h3 className="text-lg font-semibold">
@@ -343,12 +241,18 @@ const InvestorProfilePage: React.FC = () => {
               <p className="text-gray-700 mb-4">
                 Interested in connecting with {investor.name}?
               </p>
-              <button className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors">
+              <button 
+                className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors"
+                onClick={() => {
+                  // This would be replaced with actual introduction request logic
+                  alert(`Request to connect with ${investor.name} sent!`);
+                }}
+              >
                 Request Introduction
               </button>
             </div>
             
-            {/* Recommended Startups */}
+            {/* Recommended Startups - Could be implemented in the future */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-lg font-bold mb-4">Recommended Startups</h2>
               <p className="text-gray-500 text-sm">Coming soon...</p>

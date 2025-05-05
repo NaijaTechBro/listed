@@ -2,6 +2,7 @@
 
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const InvestorDashboardPage: React.FC = () => {
   // Dashboard data
@@ -53,72 +54,100 @@ const InvestorDashboardPage: React.FC = () => {
         
         {/* Main Content */}
           <div className="flex justify-between items-center mb-8">
-            <div>
+                {/* Welcome Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold">Welcome to GetListed, Investor 🎉</h1>
+        <p className="text-gray-600 mt-2">Welcome back, here's what's happening with your investments</p>
+      </div>
+            {/* <div>
               <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
               <p className="text-gray-600">Welcome back, here's what's happening with your investments</p>
-            </div>
+            </div> */}
             
         
           </div>
-
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-black p-6 rounded-lg border border-gray-100">
-              <p className="text-white text-sm mb-1">Total Invested</p>
-              <p className="text-3xl font-bold text-white">{summaryData.totalInvested}</p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg border border-gray-100">
-              <p className="text-gray-500 text-sm mb-1">Number of Startups</p>
-              <p className="text-3xl font-bold text-gray-900">{summaryData.numberOfStartups}</p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg border border-gray-100">
-              <p className="text-gray-500 text-sm mb-1">Average ROI</p>
-              <p className="text-3xl font-bold text-gray-900">{summaryData.averageROI}</p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg border border-gray-100">
-              <p className="text-gray-500 text-sm mb-1">Active Deals</p>
-              <p className="text-3xl font-bold text-gray-900">{summaryData.activeDeals}</p>
-            </div>
+              {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Total Startups */}
+        <div className="bg-black text-white rounded-xl p-6">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">Total Invested</span>
+            <span className="bg-green-900 text-green-300 text-xs px-2 py-1 rounded-full">All</span>
           </div>
+          <div className="text-3xl font-bold">{summaryData.totalInvested}</div>
+        </div>
 
-          {/* Quick Actions */}
-          <div className="mb-10">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-lg border border-gray-100 flex items-center justify-center flex-col">
-                <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mb-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        {/* Profile Views */}
+        <div className="bg-white rounded-xl p-6 border border-gray-100">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-gray-600">Number of Startups</span>
+            <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">30 Days</span>
+          </div>
+          <div className="text-3xl font-bold">12</div>
+          <div className="text-red-500 text-sm mt-2">- Decreased 9.4% today</div>
+        </div>
+
+        {/* Connections */}
+        <div className="bg-white rounded-xl p-6 border border-gray-100">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-gray-600">Active Deals</span>
+            <span className="bg-yellow-100 text-yellow-600 text-xs px-2 py-1 rounded-full">Total</span>
+          </div>
+          <div className="text-3xl font-bold">5</div>
+          <div className="text-green-500 text-sm mt-2">+ Increased 39.4% today</div>
+        </div>
+      </div>
+
+         {/* Quick Actions */}
+         <div className="mb-12">
+        <h2 className="text-xl font-medium mb-6">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Add Startup */}
+          <Link to="/dashboard/add-startup" className="block">
+            <div className="bg-white rounded-xl p-6 border border-gray-200 hover:border-blue-300 transition-all duration-300">
+              <div className="flex flex-col items-center text-center">
+                <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-4">
+                  <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </div>
-                <h3 className="font-medium mb-1">New Investment</h3>
-                <p className="text-sm text-gray-500 text-center">Add a new startup to your portfolio</p>
+                <h3 className="font-medium text-gray-900 mb-2">New Investment</h3>
+                <p className="text-sm text-gray-500">Add a new startup to your portfolios</p>
               </div>
-              
-              <div className="bg-white p-6 rounded-lg border border-gray-100 flex items-center justify-center flex-col">
-                <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-600 mb-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            </div>
+          </Link>
+
+          {/* Manage Startup */}
+          <Link to="/dashboard/my-startups" className="block">
+            <div className="bg-white rounded-xl p-6 border border-gray-200 hover:border-green-300 transition-all duration-300">
+              <div className="flex flex-col items-center text-center">
+                <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center text-green-600 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <h3 className="font-medium mb-1">Update Documents</h3>
-                <p className="text-sm text-gray-500 text-center">Manage your investment documents</p>
+                <h3 className="font-medium text-gray-900 mb-2">Update Documents</h3>
+                <p className="text-sm text-gray-500">Manage your investment documents</p>
               </div>
-              
-              <div className="bg-white p-6 rounded-lg border border-gray-100 flex items-center justify-center flex-col">
-                <div className="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center text-purple-600 mb-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            </div>
+          </Link>
+
+          {/* Browse Directory */}
+          <Link to="/investor/dashboard/marketplace" className="block">
+            <div className="bg-white rounded-xl p-6 border border-gray-200 hover:border-indigo-300 transition-all duration-300">
+              <div className="flex flex-col items-center text-center">
+                <div className="h-16 w-16 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
-                <h3 className="font-medium mb-1">Browse Directory</h3>
-                <p className="text-sm text-gray-500 text-center">Discover new investment opportunities</p>
+                <h3 className="font-medium text-gray-900 mb-2">Browse Directory</h3>
+                <p className="text-sm text-gray-500">Discover new investment opportunities</p>
               </div>
             </div>
-          </div>
+          </Link>
+        </div>
+      </div>
 
           {/* Two Column Layout for Deals and Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

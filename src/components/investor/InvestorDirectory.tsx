@@ -1,191 +1,10 @@
 // client/src/pages/InvestorDirectory.tsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useInvestor } from '../../context/InvestorContext';
+import { Investor } from '../../types';
 
-// Define Investor type 
-interface Investor {
-  _id: string;
-  userId: string;
-  name: string;
-  position: string;
-  organization: string;
-  bio: string;
-  profileImage?: string;
-  investmentFocus: string[];
-  preferredStages: string[];
-  preferredSectors: string[];
-  preferredCountries: string[];
-  minInvestmentRange: number;
-  maxInvestmentRange: number;
-  contactDetails: {
-    email?: string;
-    phone?: string;
-    website?: string;
-  };
-  socialProfiles: {
-    linkedin?: string;
-    twitter?: string;
-  };
-  portfolio: Array<{
-    startupId?: string;
-    startupName: string;
-    investmentStage: string;
-    investmentDate: string;
-    description?: string;
-  }>;
-}
-
-// Mock data for investors
-const mockInvestors: Investor[] = [
-  {
-    _id: '1',
-    userId: 'user1',
-    name: 'Jessica Anderson',
-    position: 'Managing Partner',
-    organization: 'Horizon Ventures',
-    bio: 'Serial entrepreneur turned investor with a passion for tech innovations that address real-world problems. I focus on early-stage startups with strong technical foundations and clear market opportunities.',
-    profileImage: 'https://randomuser.me/api/portraits/women/44.jpg',
-    investmentFocus: ['B2B SaaS', 'Enterprise Software', 'Deep Tech'],
-    preferredStages: ['Seed', 'Series A'],
-    preferredSectors: ['Fintech', 'Healthtech', 'Climate Tech', 'AI & ML'],
-    preferredCountries: ['United States', 'Canada', 'United Kingdom', 'Germany'],
-    minInvestmentRange: 250000,
-    maxInvestmentRange: 2000000,
-    contactDetails: {
-      email: 'jessica@horizonventures.com',
-      phone: '+1-555-123-4567',
-      website: 'https://www.horizonventures.com'
-    },
-    socialProfiles: {
-      linkedin: 'https://www.linkedin.com/in/jessicaanderson',
-      twitter: 'https://twitter.com/jessanderson'
-    },
-    portfolio: [
-      {
-        startupId: '101',
-        startupName: 'NeuraTech',
-        investmentStage: 'Seed',
-        investmentDate: '2023-05-10T00:00:00.000Z',
-        description: 'AI-driven medical diagnostics platform'
-      },
-      {
-        startupId: '102',
-        startupName: 'EcoGrid',
-        investmentStage: 'Series A',
-        investmentDate: '2022-11-22T00:00:00.000Z',
-        description: 'Smart energy management system for commercial buildings'
-      }
-    ]
-  },
-  {
-    _id: '2',
-    userId: 'user2',
-    name: 'Michael Chen',
-    position: 'Principal',
-    organization: 'BlueOcean Capital',
-    bio: 'Technology investor with 15+ years experience in scaling SaaS businesses. Previously founded two tech startups and served as CTO for a Y Combinator alum.',
-    profileImage: 'https://randomuser.me/api/portraits/men/36.jpg',
-    investmentFocus: ['SaaS', 'Marketplace', 'Consumer Tech'],
-    preferredStages: ['Pre-seed', 'Seed'],
-    preferredSectors: ['E-commerce', 'EdTech', 'PropTech', 'Logistics'],
-    preferredCountries: ['United States', 'Singapore', 'Australia', 'Israel'],
-    minInvestmentRange: 100000,
-    maxInvestmentRange: 1000000,
-    contactDetails: {
-      email: 'mchen@blueocean.vc',
-      phone: '+1-555-987-6543',
-      website: 'https://www.blueocean.vc'
-    },
-    socialProfiles: {
-      linkedin: 'https://www.linkedin.com/in/michaelchen',
-      twitter: 'https://twitter.com/mchen_vc'
-    },
-    portfolio: [
-      {
-        startupId: '201',
-        startupName: 'LearnLoop',
-        investmentStage: 'Pre-seed',
-        investmentDate: '2023-02-05T00:00:00.000Z',
-        description: 'Adaptive learning platform for K-12 education'
-      }
-    ]
-  },
-  {
-    _id: '3',
-    userId: 'user3',
-    name: 'Sarah Johnson',
-    position: 'Investment Director',
-    organization: 'TechFund Africa',
-    bio: 'Passionate about supporting entrepreneurs across Africa. I seek innovative solutions to local challenges with global potential.',
-    profileImage: 'https://randomuser.me/api/portraits/women/68.jpg',
-    investmentFocus: ['Impact Tech', 'Consumer Tech', 'Infrastructure'],
-    preferredStages: ['Seed', 'Series A'],
-    preferredSectors: ['Fintech', 'Agritech', 'Healthtech', 'Clean Energy'],
-    preferredCountries: ['Nigeria', 'Kenya', 'South Africa', 'Ghana', 'Rwanda'],
-    minInvestmentRange: 150000,
-    maxInvestmentRange: 1500000,
-    contactDetails: {
-      email: 'sarah@techfundafrica.com',
-      phone: '+254-700-123-456',
-      website: 'https://www.techfundafrica.com'
-    },
-    socialProfiles: {
-      linkedin: 'https://www.linkedin.com/in/sarahjohnson',
-      twitter: 'https://twitter.com/sarahj_investor'
-    },
-    portfolio: [
-      {
-        startupId: '301',
-        startupName: 'PayFast',
-        investmentStage: 'Seed',
-        investmentDate: '2023-07-12T00:00:00.000Z', 
-        description: 'Mobile payment solution for African markets'
-      },
-      {
-        startupId: '302',
-        startupName: 'Agri-Connect',
-        investmentStage: 'Series A',
-        investmentDate: '2022-09-08T00:00:00.000Z',
-        description: 'Platform connecting farmers to markets and resources'
-      }
-    ]
-  },
-  {
-    _id: '4',
-    userId: 'user4',
-    name: 'Ahmed Hassan',
-    position: 'Founding Partner',
-    organization: 'MENA Ventures',
-    bio: 'Focused on backing exceptional founders building innovative solutions for the Middle East and North Africa region.',
-    profileImage: 'https://randomuser.me/api/portraits/men/22.jpg',
-    investmentFocus: ['Regional Solutions', 'Tech Enablement', 'B2C'],
-    preferredStages: ['Pre-seed', 'Seed', 'Series A'],
-    preferredSectors: ['Logistics', 'E-commerce', 'Fintech', 'Edtech'],
-    preferredCountries: ['Egypt', 'UAE', 'Saudi Arabia', 'Jordan', 'Morocco'],
-    minInvestmentRange: 200000,
-    maxInvestmentRange: 2500000,
-    contactDetails: {
-      email: 'ahmed@menaventures.com',
-      phone: '+20-100-123-4567',
-      website: 'https://www.menaventures.com'
-    },
-    socialProfiles: {
-      linkedin: 'https://www.linkedin.com/in/ahmedhassan',
-      twitter: 'https://twitter.com/ahmedhassan_vc'
-    },
-    portfolio: [
-      {
-        startupId: '401',
-        startupName: 'DeliverNow',
-        investmentStage: 'Series A',
-        investmentDate: '2023-03-15T00:00:00.000Z',
-        description: 'Last-mile delivery platform for urban centers'
-      }
-    ]
-  }
-];
-
-// Available filter options
+// Available filter options (imported or defined elsewhere in your app)
 const sectorOptions = ['Fintech', 'Healthtech', 'Edtech', 'Agritech', 'E-commerce', 'Clean Energy', 'Logistics', 'AI & ML', 'PropTech', 'Climate Tech'];
 const countryOptions = ['Nigeria', 'Kenya', 'South Africa', 'Egypt', 'Ghana', 'Rwanda', 'Ethiopia', 'Senegal', 'United States', 'United Kingdom', 'UAE', 'Canada', 'Germany', 'Singapore', 'Australia', 'Israel', 'Saudi Arabia', 'Jordan', 'Morocco'];
 const stageOptions = ['Pre-seed', 'Seed', 'Series A', 'Series B', 'Later Stage', 'All Stages'];
@@ -245,8 +64,16 @@ const InvestorCard: React.FC<{ investor: Investor }> = ({ investor }) => {
 };
 
 const InvestorDirectory: React.FC = () => {
-  const [investors, setInvestors] = useState<Investor[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  // Use the investor context
+  const { 
+    investors, 
+    loading, 
+    error, 
+    getInvestors, 
+    searchInvestors,
+    clearError 
+  } = useInvestor();
+
   const [filters, setFilters] = useState({
     sector: '',
     stage: '',
@@ -255,58 +82,14 @@ const InvestorDirectory: React.FC = () => {
   });
 
   useEffect(() => {
-    fetchInvestors();
-  }, []);
-
-  // Mock implementation of the API call
-  const fetchInvestors = () => {
-    setLoading(true);
+    // Get all investors when component mounts
+    getInvestors();
     
-    // Simulate network delay
-    setTimeout(() => {
-      try {
-        // Filter the mock data based on search criteria
-        let filteredInvestors = [...mockInvestors];
-        
-        if (filters.searchTerm) {
-          const searchTermLower = filters.searchTerm.toLowerCase();
-          filteredInvestors = filteredInvestors.filter(investor => 
-            investor.name.toLowerCase().includes(searchTermLower) ||
-            investor.organization.toLowerCase().includes(searchTermLower) ||
-            investor.bio.toLowerCase().includes(searchTermLower)
-          );
-        }
-        
-        if (filters.sector) {
-          filteredInvestors = filteredInvestors.filter(investor => 
-            investor.preferredSectors.some(sector => 
-              sector.toLowerCase() === filters.sector.toLowerCase())
-          );
-        }
-        
-        if (filters.country) {
-          filteredInvestors = filteredInvestors.filter(investor => 
-            investor.preferredCountries.some(country => 
-              country.toLowerCase() === filters.country.toLowerCase())
-          );
-        }
-        
-        if (filters.stage && filters.stage !== 'All Stages') {
-          filteredInvestors = filteredInvestors.filter(investor => 
-            investor.preferredStages.some(stage => 
-              stage === filters.stage)
-          );
-        }
-        
-        setInvestors(filteredInvestors);
-      } catch (error) {
-        console.error('Error filtering investors:', error);
-        setInvestors([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 600); // Simulate network delay of 600ms
-  };
+    // Clean up function to clear any errors when component unmounts
+    return () => {
+      clearError();
+    };
+  }, []);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -319,13 +102,52 @@ const InvestorDirectory: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchInvestors();
+    
+    // Prepare search criteria based on filters
+    const searchCriteria: any = {};
+    
+    if (filters.searchTerm) {
+      searchCriteria.query = filters.searchTerm;
+    }
+    
+    if (filters.sector) {
+      searchCriteria.sectors = [filters.sector];
+    }
+    
+    if (filters.country) {
+      searchCriteria.countries = [filters.country];
+    }
+    
+    if (filters.stage && filters.stage !== 'All Stages') {
+      searchCriteria.stages = [filters.stage];
+    }
+    
+    // If we have any search criteria, use searchInvestors
+    if (Object.keys(searchCriteria).length > 0) {
+      searchInvestors(searchCriteria);
+    } else {
+      // Otherwise, get all investors
+      getInvestors();
+    }
   };
 
   return (
     <div className="bg-gray-50 min-h-screen py-12">
       <div className="container mx-auto px-4">
         <h1 className="text-3xl font-bold mb-8">Investor Directory</h1>
+        
+        {/* Error display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded mb-4">
+            <p>{error}</p>
+            <button 
+              onClick={clearError}
+              className="text-red-600 underline text-sm"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
         
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
@@ -349,7 +171,7 @@ const InvestorDirectory: React.FC = () => {
               >
                 <option value="">All Sectors</option>
                 {sectorOptions.map(sector => (
-                  <option key={sector} value={sector.toLowerCase()}>{sector}</option>
+                  <option key={sector} value={sector}>{sector}</option>
                 ))}
               </select>
             </div>
@@ -363,7 +185,7 @@ const InvestorDirectory: React.FC = () => {
               >
                 <option value="">All Countries</option>
                 {countryOptions.map(country => (
-                  <option key={country} value={country.toLowerCase()}>{country}</option>
+                  <option key={country} value={country}>{country}</option>
                 ))}
               </select>
             </div>
@@ -384,7 +206,7 @@ const InvestorDirectory: React.FC = () => {
             
             <button
               type="submit"
-              className="md:hidden mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+              className="md:col-span-4 lg:col-span-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               Apply Filters
             </button>
@@ -408,7 +230,7 @@ const InvestorDirectory: React.FC = () => {
               ))}
             </div>
             
-            {investors.length === 0 && (
+            {investors.length === 0 && !loading && (
               <div className="text-center py-16">
                 <h3 className="text-2xl font-medium text-gray-600 mb-2">No investors found</h3>
                 <p className="text-gray-500">Try adjusting your filters to see more results</p>

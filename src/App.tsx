@@ -52,6 +52,9 @@ import InvestorProfilePage from './components/investor/InvestorProfilePage';
 import DealsPage from './pages/Investor/DealsPage';
 import FoundersPage from './pages/Investor/FoundersPage';
 import MarketplacePage from './pages/Investor/MarketplacePage';
+import { InvestorProvider } from './context/InvestorContext';
+//import InvestorPortfolio from './pages/Investor/Investorportfolio';
+import InvestorForm from './components/investor/InvestorForm';
 // import VerifyResultPage from './pages/Auth/VerifyResultPage';
 
 const App: React.FC = () => {
@@ -59,6 +62,7 @@ const App: React.FC = () => {
     <AuthProvider>
       <StartupProvider>
         <VerificationProvider>
+          <InvestorProvider>
         <Router>
           <Routes>
             {/* Authentication Routes */}
@@ -96,6 +100,8 @@ const App: React.FC = () => {
             <Route path="/startups" element={<StartupDirectory />} />
             <Route path="/startup-profile/:id" element={<StartupProfile />} />
 
+            <Route path="investors" element={<InvestorDirectory/>} />
+
 
             {/* CompanyPage Route */}
             <Route path="/faqs" element={<FAQPage/>} />
@@ -126,6 +132,8 @@ const App: React.FC = () => {
                 <Route path="founder" element={<FoundersPage />} />
                 <Route path="deals-room" element={<DealsPage />} />
                 <Route path="marketplace" element={<MarketplacePage/>} />
+                {/* <Route path="portfolio" element={<InvestorPortfolio/>} /> */}
+                <Route path="profile" element={<InvestorForm/>} />
               </Route>
             </Route>
 
@@ -141,6 +149,7 @@ const App: React.FC = () => {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Router>
+         </InvestorProvider>
         </VerificationProvider>
       </StartupProvider>
     </AuthProvider>
