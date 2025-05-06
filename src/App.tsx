@@ -59,16 +59,21 @@ import PitchDeckBuilder from './pages/pitch-deck/PitchDeckBuilder';
 import TemplatesPage from './pages/pitch-deck/TemplatesPage';
 import ExamplesPage from './pages/pitch-deck/ExamplesPage';
 import { PitchDeckProvider } from './context/PitchDeckContext';
+import ProfileSettingPage from './pages/Startup/ProfileSettingPage';
+import { ProfileProvider } from './context/ProfileContext';
+import { ThemeProvider } from './context/ThemeContext';
 // import VerifyResultPage from './pages/Auth/VerifyResultPage';
 
 
 const App: React.FC = () => {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <StartupProvider>
         <VerificationProvider>
           <InvestorProvider>
             <PitchDeckProvider>
+              <ProfileProvider>
         <Router>
           <Routes>
             {/* Authentication Routes */}
@@ -136,6 +141,7 @@ const App: React.FC = () => {
                 <Route path="add-startup" element={<AddStartupWrapper />} />
                 <Route path="edit-startup/:id" element={<StartupForm />} />
                 <Route path="my-startups" element={<MyStartups />} />
+                <Route path='settings' element={<ProfileSettingPage/>} />
               </Route>
             </Route>
 
@@ -164,11 +170,13 @@ const App: React.FC = () => {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
               </Router>
+              </ProfileProvider>
             </PitchDeckProvider>
           </InvestorProvider>
         </VerificationProvider>
       </StartupProvider>
     </AuthProvider>
+    </ThemeProvider>
   );
 };
 
