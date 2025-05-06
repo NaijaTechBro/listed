@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useStartup } from '../../context/StartupContext';
 import StartupCard from '../../components/startup/StartupCard';
 import { StartupFilter } from '../../types';
+import Navbar from '../../components/common/Navbar';
 
 const StartupDirectory: React.FC = () => {
   const { startups, getStartups, loading, count, pagination } = useStartup();
@@ -97,6 +98,7 @@ const StartupDirectory: React.FC = () => {
   
   return (
     <>
+    <Navbar />
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-6">

@@ -1,8 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { StartupProvider } from './context/StartupContext';
 import { VerificationProvider } from './context/VerificationContext';
+import { InvestorProvider } from './context/InvestorContext';
 
 // Public pages
 import HomePage from './pages/Home';
@@ -52,10 +53,14 @@ import InvestorProfilePage from './components/investor/InvestorProfilePage';
 import DealsPage from './pages/Investor/DealsPage';
 import FoundersPage from './pages/Investor/FoundersPage';
 import MarketplacePage from './pages/Investor/MarketplacePage';
-import { InvestorProvider } from './context/InvestorContext';
 //import InvestorPortfolio from './pages/Investor/Investorportfolio';
 import InvestorForm from './components/investor/InvestorForm';
+import PitchDeckBuilder from './pages/pitch-deck/PitchDeckBuilder';
+import TemplatesPage from './pages/pitch-deck/TemplatesPage';
+import ExamplesPage from './pages/pitch-deck/ExamplesPage';
+import { PitchDeckProvider } from './context/PitchDeckContext';
 // import VerifyResultPage from './pages/Auth/VerifyResultPage';
+
 
 const App: React.FC = () => {
   return (
@@ -63,6 +68,7 @@ const App: React.FC = () => {
       <StartupProvider>
         <VerificationProvider>
           <InvestorProvider>
+            <PitchDeckProvider>
         <Router>
           <Routes>
             {/* Authentication Routes */}
@@ -116,7 +122,16 @@ const App: React.FC = () => {
             {/* Protected routes for all authenticated users */}
             <Route element={<ProtectedRoute allowedRoles={['founder']} />}>
             <Route path="/request-verification" element={<RequestVerificationPage />} />
-              <Route path="/dashboard" element={<Sidebar />}>
+
+              {/* Updated route handling for pitch deck builder */}
+            <Route path="/builder" element={<Navigate to="/builder/new" replace />} />
+            <Route path="/builder/new" element={<PitchDeckBuilder />} />
+            <Route path="/builder/:id" element={<PitchDeckBuilder />} />
+      
+            <Route path="/templates" element={<TemplatesPage />} />
+            <Route path="/examples" element={<ExamplesPage />} />
+
+            <Route path="/dashboard" element={<Sidebar />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="add-startup" element={<AddStartupWrapper />} />
                 <Route path="edit-startup/:id" element={<StartupForm />} />
@@ -148,8 +163,9 @@ const App: React.FC = () => {
             {/* 404 route */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
-        </Router>
-         </InvestorProvider>
+              </Router>
+            </PitchDeckProvider>
+          </InvestorProvider>
         </VerificationProvider>
       </StartupProvider>
     </AuthProvider>

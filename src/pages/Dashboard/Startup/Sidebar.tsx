@@ -331,9 +331,9 @@ const Sidebar: React.FC = () => {
             <h3 className="px-3 text-xs font-medium text-gray-500 uppercase tracking-wider">TOOLS</h3>
             <div className="mt-2 space-y-1">
               <Link
-                to="/coming-soon"
+                to="/builder/:id?"
                 className={`flex items-center px-3 py-2 rounded-md transition-all duration-200 ${
-                  isSidebarLinkActive('/coming-soon')
+                  isSidebarLinkActive('/builder/:id?')
                     ? 'bg-gray-100 text-gray-900 font-medium'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 }`}
