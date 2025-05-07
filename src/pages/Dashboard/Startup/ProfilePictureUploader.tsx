@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useProfile } from '../../context/ProfileContext';
+import { useProfile } from '../../../context/ProfileContext';
 
 const ProfilePictureUploader: React.FC = () => {
   const { profile, uploadProfilePicture, deleteProfilePicture, loading } = useProfile();
